@@ -20,7 +20,7 @@ module.exports = {
     open: true,
     proxy: {
       '^/api': {
-        target: 'http://localhost:3000',
+        target: 'http://82.156.143.194:8090',
         ws: true,
         changeOrigin: true
       }

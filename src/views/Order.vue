@@ -20,95 +20,59 @@
             <div class="order-title">
               <p>我的订单</p>
             </div>
-            <div class="order-select">
-              <router-link :to="{ path: '/order'}">
-                <span :class="type==0?'select':'no-select'">全部有效订单</span>
-              </router-link>
-              <span class="cut">|</span>
-              <router-link :to="{ path: '/order', query: {type:1} }">
-                <span :class="type==1?'select':'no-select'">待支付</span>
-              </router-link>
-              <span class="cut">|</span>
-              <router-link :to="{ path: '/order', query: {type:2} }">
-                <span :class="type==2?'select':'no-select'">已支付</span>
-              </router-link>
-              <span class="cut">|</span>
-              <span class="no-select">订单回收站</span>
-              <div class="search">
-                <el-input placeholder="输入商品名称、订单号" v-model="search">
-                  <el-button slot="append" icon="el-icon-search" @click="searchClick"></el-button>
-                </el-input>
-              </div>
-            </div>
             <div v-if="orders.length>0">
               <!--我的订单头部 end-->
               <!--订单列表-->
               <div class="order-list" v-for="(item,index) in orders" :key="index">
                 <div class="order-list-head">
-                  <div class="order-pay" v-if="item.type==1">等待付款</div>
-                  <div class="order-pay" v-else>已付款</div>
-                  <div class="order-info">
-                    <div style="width:650px;">
-                      <span class="info">{{item.created_at | dateFormat}}</span>
-                      <span class="cut">|</span>
-                      <span class="info">{{item.address_name}}</span>
-                      <span class="cut">|</span>
-                      <span class="info">订单号：{{item.order_num}}</span>
-                      <span class="cut">|</span>
-                      <span class="info">在线支付</span>
-                    </div>
-                    <span class="info" style="margin-left:30px">应付金额：</span>
-                    <span class="money">{{item.discount_price*item.num}}</span>
-                    <span class="info">元</span>
-                  </div>
-                </div>
-                <div class="order-list-product">
-                  <div class="pro-img">
-                    <router-link
-                      :to="{ path: '/goods/details', query: {productID:item.product_id} }"
-                    >
-                      <img :src="item.img_path" />
-                    </router-link>
-                  </div>
-                  <div class="pro-info">
-                    <p style="margin-bottom:7px">
+                  <span class="order-pay">已付款</span>
+                  <span class="operate">
                       <router-link
-                        class="info-href"
-                        :to="{ path: '/goods/details', query: {productID:item.product_id} }"
-                      >{{item.name}}</router-link>
-                    </p>
-                    <span>{{item.discount_price}}</span>&nbsp;×
-                    <span>{{item.num}}</span>
-                  </div>
-                  <div class="operate">
-                    <div v-if="item.type==1">
-                      <router-link :to="{ path: '/payment', query: {orderNum:item.order_num} }">
-                        <el-button class="button-pay">立即付款</el-button>
-                      </router-link>
-                    </div>
-                    <div>
-                      <router-link
-                        :to="{ path: '/order/details', query: {orderNum:item.order_num} }"
+                        :to="{ path: '/order/details', query: {orderNum:item.order_id} }"
                       >
                         <el-button plain class="button-detail">订单详情</el-button>
                       </router-link>
+                  </span>
+                  <div class="order-info">
+                    <div style="width:650px;">
+                      <span class="info">{{item.createTime}}</span>
+                      <span class="cut">|</span>
+                      <span class="info">{{item.address}}</span>
+                      <span class="cut">|</span>
+                      <span class="info">订单号：{{item.id}}</span>
+                      <span class="cut">|</span>
+                      <span class="info">在线支付</span>
                     </div>
-                    <div v-if="item.type==2">
-                      <el-button type="info" class="button-detail">删除订单</el-button>
-                    </div>
+                    <span class="info" style="margin-left:30px">总计金额：</span>
+                    <span class="money">{{item.price}}</span>
+                    <span class="info">元</span>
+                  </div>
+                </div>
+                <div class="order-list-product" v-for="(item1,index) in item.goodsInfo" :key="index">
+                  <div class="pro-img">
+                    <router-link
+                      :to="{ path: '/goods/details', query: {productID:item1.id} }"
+                    >
+                      <img :src="item1.picture" />
+                    </router-link>
+                  </div>
+                  <div class="pro-info">
+                    <span style="margin-bottom:7px">
+                      <router-link
+                        class="info-href"
+                        :to="{ path: '/goods/details', query: {productID:item1.id} }"
+                      >{{item1.name}}</router-link>
+                    </span>
+                  </div>
+                  <div style='margin-left: 110px'>
+                    <span>
+                      {{item1.price}} 元&nbsp;×
+                      {{item1.amount}}
+                    </span>
                   </div>
                 </div>
               </div>
               <!-- 分页 -->
-              <div class="pagination">
-                <el-pagination
-                  background
-                  @current-change="handleCurrentChange"
-                  :page-size="pageSize"
-                  layout="total, prev, pager, next, jumper"
-                  :total="total"
-                ></el-pagination>
-              </div>
               <div class="extra"></div>
               <div class="extra"></div>
             </div>
@@ -127,25 +91,46 @@
 </template>
 <script>
 import CenterMenu from '../components/CenterMenu'
-import * as ordersAPI from '@/api/orders'
+import axios from 'axios'
 export default {
   name: 'Order',
   data() {
     return {
-      orders: [], // 订单列表
-      pageSize: 5,
-      total: 0,
-      start: 0,
-      limit: 5,
-      type: ''
+      orders:[],
+      list: [
+      {
+        "address": "string",
+        "createTime": "2023-05-29T13:19:08.422Z",
+        "goodsInfo": [
+        {
+          "amount": "string",
+          "goods": {
+            "amount": "string",
+            "createTime": "2023-05-29T13:19:08.422Z",
+            "description": "string",
+            "discount": "string",
+            "id": "string",
+            "modifyTime": "2023-05-29T13:19:08.422Z",
+            "name": "string",
+            "originalPrice": "string",
+            "picture": "string",
+            "price": "string",
+            "sales": "string",
+            "state": "string",
+            "type": "string",
+            "viewCnt": "string"
+          }
+        }],
+        "id": "string",
+        "modifyTime": "2023-05-29T13:19:08.422Z",
+        "price": "string",
+        "state": "string",
+        "userId": "string"
+      }],// 订单列表
     }
   },
   activated() {
-    if (this.$route.query.type != undefined) {
-      this.type = this.$route.query.type
-    } else {
-      this.type = 0
-    }
+   this.getOrders()
   },
   watch: {
     // 监听订单类型的变化，请求后端获取商品数据
@@ -154,24 +139,20 @@ export default {
     }
   },
   methods: {
-    handleCurrentChange(val) {
-      this.start = this.limit * (val - 1) // val 页面
-      this.getOrders()
-    },
     getOrders() {
       // 获取订单数据
-      ordersAPI
-        .listOrders(
-          this.$store.getters.getUser.id,
-          this.type,
-          this.start,
-          this.limit
-        )
-        .then(res => {
+      this.orders=this.orderslist;
+      this.total=2;
+      axios.get('http://82.156.143.194:8090/shopping/listOrders', {
+        params: {
+          page:1,
+          limit:100
+        }
+      }).then(res =>{
           if (res.status === 200) {
-            this.orders = res.data.items
+            this.orders = res.data.list
             this.total = res.data.total
-          } else if (res.status === 20001) {
+          } else if (res.status === 401) {
             //token过期，需要重新登录
             this.loginExpired(res.msg)
           } else {
@@ -181,6 +162,7 @@ export default {
         .catch(err => {
           this.notifyError('获取订单失败', err)
         })
+
     }
   },
   components: {
@@ -210,31 +192,11 @@ export default {
 .extra {
   height: 10px;
 }
-.order-select {
-  width: 920px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-}
-.order-select .no-select {
-  font-size: 17px;
-  color: #757575;
-  margin-right: 10px;
-}
-.order-select .select {
-  font-size: 17px;
-  color: #ff6700;
-  margin-right: 10px;
-}
 .order-select .cut {
   font-size: 22px;
   color: #c9c7c7;
   margin-right: 15px;
   font-weight: 300;
-}
-.order-select .search {
-  width: 300px;
-  margin-left: 225px;
 }
 /*订单头部*/
 .order-list-head {
@@ -251,13 +213,6 @@ export default {
 .order-list-head .order-pay {
   font-size: 19px;
   color: #ff6700;
-  margin-left: 30px;
-  margin-top: 20px;
-  margin-bottom: 10px;
-}
-.order-list-head .order-success-pay {
-  font-size: 19px;
-  color: #00a724;
   margin-left: 30px;
   margin-top: 20px;
   margin-bottom: 10px;
@@ -319,25 +274,15 @@ export default {
 .order-list-product .pro-info .info-href:hover {
   color: #ff6700;
 }
-.order-list-product .operate {
+.operate {
+  margin-left: 630px;
   line-height: 50px;
-  margin-left: 150px;
-}
-.order-list-product .operate .button-pay {
-  width: 100px;
-  color: #ffffff;
-  background-color: #ff6700;
 }
 
-.order-list-product .operate .button-detail {
+.operate .button-detail {
   width: 100px;
 }
 /*订单商品END*/
-.order-content .pagination {
-  width: 300px;
-  margin: 0 auto;
-  margin-top: 20px;
-}
 .empty {
   width: 200px;
   margin: 0 auto;

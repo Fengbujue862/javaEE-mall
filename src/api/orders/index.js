@@ -13,10 +13,10 @@ const postOrder = form =>
   axios.post('/api/v1/orders', form).then(res => res.data)
 
 // 读取订单
-const listOrders = (user_id, type, start, limit) =>
+const listOrders = ( page, limit) =>
   axios
-    .get(`/api/v1/user/${user_id}/orders`, {
-      params: { type, start, limit }
+    .get(`http://82.156.143.194:8090/shopping/listOrders`, {
+      params: { page, limit }
     })
     .then(res => res.data)
 

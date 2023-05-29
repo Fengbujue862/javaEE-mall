@@ -14,57 +14,32 @@
         </div>
         <el-col :span="20">
           <div class="order-details-content">
-            <div class="extra"></div>
             <div class="order-details-title">
               <p>订单详情</p>
             </div>
             <div class="order-operate">
-              <div class="order-num">订单号：{{order.order_num}}</div>
-              <div class="order-button" v-if="order.type==1">
-                <el-button class="cancel" type="info" size="small" style="width:120px" plain>取消订单</el-button>
-                <router-link :to="{ path: '/payment', query: {orderNum:order.order_num}}">
-                  <el-button class="pay" size="small" style="width:120px">立即付款</el-button>
-                </router-link>
-              </div>
+              <span class="order-num">订单号：{{order.order_id}}</span>
+              <span class="order-success-info">已付款:{{order.created_at}}</span>
             </div>
-            <div class="order-step-info" v-if="order.type==1">等待付款</div>
-            <div class="order-success-info" v-else>已付款</div>
-            <div class="order-step">
-              <el-steps
-                :space="200"
-                :active="order.type==1?1:5"
-                finish-status="success"
-                align-center
-              >
-                <el-step title="下单" :description="order.created_at| dateFormat"></el-step>
-                <el-step title="付款" v-if="order.type==1"></el-step>
-                <el-step title="付款" :description="order.updated_at| dateFormat" v-else></el-step>
-                <el-step title="配货"></el-step>
-                <el-step title="出库"></el-step>
-                <el-step title="交易成功"></el-step>
-              </el-steps>
-            </div>
-            <div class="extra"></div>
-            <div class="extra"></div>
 
-            <div class="order-list-product">
+            <div class="order-list-product" v-for="(item,index) in order.orderlistproduct" :key="index">
               <div class="pro-img">
-                <router-link :to="{ path: '/goods/details', query: {productID:order.product_id} }">
-                  <img :src="order.img_path" />
+                <router-link :to="{ path: '/goods/details', query: {productID:item.product_id} }">
+                  <img :src="item.img_path" />
                 </router-link>
               </div>
               <div class="pro-info">
                 <span style="margin-bottom:7px">
                   <router-link
                     class="info-href"
-                    :to="{ path: '/goods/details', query: {productID:order.product_id} }"
-                  >{{order.name}}</router-link>
+                    :to="{ path: '/goods/details', query: {productID:item.product_id} }"
+                  >{{item.name}}</router-link>
                 </span>
               </div>
               <div class="pro-price">
                 <span>
-                  {{order.discount_price}}元&nbsp;×
-                  {{order.num}}
+                  {{item.discount_price}} 元&nbsp;×
+                  {{item.num}}
                 </span>
               </div>
             </div>
@@ -81,28 +56,6 @@
                 <p>{{order.address}}</p>
               </div>
             </div>
-            <div class="order-address-title">支付方式</div>
-            <div class="order-address">
-              <div class="order-address-head">
-                <p>支付方式：</p>
-              </div>
-              <div class="order-address-data">
-                <p>在线支付</p>
-              </div>
-            </div>
-            <div class="order-address-title">发票信息</div>
-            <div class="order-address">
-              <div class="order-address-head">
-                <p>发票类型：</p>
-                <p>发票内容：</p>
-                <p>发票抬头：</p>
-              </div>
-              <div class="order-address-data">
-                <p>电子普通发票</p>
-                <p>购买商品明细</p>
-                <p>个人</p>
-              </div>
-            </div>
             <!-- 结算列表 -->
             <div class="section-count">
               <div class="money-box">
@@ -113,24 +66,16 @@
                   </li>
                   <li>
                     <span class="title">商品总价：</span>
-                    <span class="value">{{order.discount_price}}元</span>
-                  </li>
-                  <li>
-                    <span class="title">活动优惠：</span>
-                    <span class="value">-0元</span>
-                  </li>
-                  <li>
-                    <span class="title">优惠券抵扣：</span>
-                    <span class="value">-0元</span>
+                    <span class="value">{{order.price}}元</span>
                   </li>
                   <li>
                     <span class="title">运费：</span>
                     <span class="value">0元</span>
                   </li>
                   <li class="total">
-                    <span class="title">应付总额：</span>
+                    <span class="title">订单总额：</span>
                     <span class="value">
-                      <span class="total-price">{{order.num*order.discount_price}}</span>元
+                      <span class="total-price">{{order.price}}</span>元
                     </span>
                   </li>
                 </ul>
@@ -145,14 +90,32 @@
 </template>
 <script>
 import CenterMenu from '../components/CenterMenu'
-import * as ordersAPI from '@/api/orders'
+//import * as ordersAPI from '@/api/orders'
 export default {
   name: 'OrderDetails',
   data() {
     return {
       orderNum: '', // 订单num,
       order: '',
-      address: ''
+      address: '',
+      orderslist:
+        {
+          order_id:1,//订单号
+          created_at:'2023-5-25 16:07',//订单创建时间
+          num:2,
+          price:11,
+          address_name:'what',//收货人
+          address_phone:1,
+          address:'11',
+          orderlistproduct:[{
+            product_id:1,
+            name:'product1',//product
+            num:1,//product
+            img_path:"../assets/imgs/error.png",
+            discount_price:2,
+          }],
+          user_id:1,
+        }, // 订单列表
     }
   },
   activated() {
@@ -168,6 +131,8 @@ export default {
   },
   methods: {
     load() {
+      this.order=this.orderslist;
+      /*
       ordersAPI
         .showOrder(this.orderNum)
         .then(res => {
@@ -183,6 +148,8 @@ export default {
         .catch(err => {
           this.notifyError('获取订单失败', err)
         })
+
+       */
     }
   },
   components: {
@@ -200,59 +167,37 @@ export default {
   margin-bottom: 30px;
 }
 .order-details-title {
-  height: 100px;
+  height: 84px;
   display: flex;
   align-items: center;
+  font-weight: bold;
 }
 .order-details-title p {
   font-size: 30px;
   color: #757575;
   margin-left: 50px;
 }
-.extra {
-  height: 10px;
-}
 /*订单号按钮区域*/
 .order-details-content .order-operate {
   width: 920px;
   margin: 0 auto;
   display: flex;
-  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 5px;
+  border-bottom: 2px solid black;
 }
 .order-details-content .order-operate .order-num {
   width: 500px;
   font-size: 18px;
-  margin-bottom: 17px;
   color: #242424;
 }
-.order-details-content .order-operate .order-button {
-  margin-left: 170px;
-}
-.order-details-content .order-operate .order-button .pay {
-  margin-left: 10px;
-  background-color: #ff6700;
-  color: #ffffff;
-}
+
 /*订单号按钮区域END*/
 /*进度条区域*/
-.order-details-content .order-step-info {
-  width: 920px;
-  margin: 0 auto;
-  color: #ff6700;
-  font-size: 18px;
-  margin-top: 20px;
-}
 .order-details-content .order-success-info {
   width: 920px;
-  margin: 0 auto;
+  margin-left: 600px;
   color: #00a724;
   font-size: 18px;
-  margin-top: 20px;
-}
-.order-details-content .order-step {
-  width: 920px;
-  margin: 0 auto;
-  margin-top: 40px;
 }
 /*进度条区域END*/
 /*订单商品区域*/
@@ -284,7 +229,7 @@ export default {
   color: #ff6700;
 }
 .order-details-content .order-list-product .pro-price {
-  margin-left: 30px;
+  margin-left: 620px;
   font-size: 15px;
   color: #333333;
 }
@@ -297,10 +242,12 @@ export default {
   color: #242424;
   font-size: 18px;
   margin-top: 20px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid black;
 }
 .order-details-content .order-address {
   width: 920px;
-  height: 120px;
+  height: 100px;
   margin: 0 auto;
   display: flex;
   align-items: center;

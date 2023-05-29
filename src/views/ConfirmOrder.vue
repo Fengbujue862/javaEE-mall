@@ -23,7 +23,7 @@
           <div class="cart-header-select">
             <el-dropdown>
               <router-link to class="href">
-                <span style="margin-right:5px">{{this.$store.getters.getUser.nickname}}</span>
+                <span style="margin-right:5px">{{this.$store.getters.getUser.name}}</span>
                 <i class="el-icon-caret-bottom"></i>
               </router-link>
               <el-dropdown-menu slot="dropdown">
@@ -82,10 +82,10 @@
 
       <!-- 商品及优惠券 -->
       <div class="section-goods">
-        <p class="title">商品及优惠券</p>
+        <p class="title">商品</p>
         <div class="goods-list">
           <ul>
-            <li v-for="item in getCheckGoods" :key="item.id">
+            <li v-for="item in cart.orderlistproduct" :key="item.id">
               <img :src="item.img_path" />
               <span class="pro-name">{{item.name}}</span>
               <span class="pro-price">{{item.discount_price}}元</span>
@@ -98,41 +98,17 @@
       </div>
       <!-- 商品及优惠券END -->
 
-      <!-- 配送方式 -->
-      <div class="section-shipment">
-        <p class="title">配送方式</p>
-        <p class="shipment">包邮</p>
-      </div>
-      <!-- 配送方式END -->
-
-      <!-- 发票 -->
-      <div class="section-invoice">
-        <p class="title">发票</p>
-        <p class="invoice">电子发票</p>
-        <p class="invoice">个人</p>
-        <p class="invoice">商品明细</p>
-      </div>
-      <!-- 发票END -->
-
       <!-- 结算列表 -->
       <div class="section-count">
         <div class="money-box">
           <ul>
             <li>
               <span class="title">商品件数：</span>
-              <span class="value">{{getCheckNum}}件</span>
+              <span class="value">{{cart.num}}件</span>
             </li>
             <li>
               <span class="title">商品总价：</span>
-              <span class="value">{{getTotalPrice}}元</span>
-            </li>
-            <li>
-              <span class="title">活动优惠：</span>
-              <span class="value">-0元</span>
-            </li>
-            <li>
-              <span class="title">优惠券抵扣：</span>
-              <span class="value">-0元</span>
+              <span class="value">{{cart.price}}元</span>
             </li>
             <li>
               <span class="title">运费：</span>
@@ -141,7 +117,7 @@
             <li class="total">
               <span class="title">应付总额：</span>
               <span class="value">
-                <span class="total-price">{{getTotalPrice}}</span>元
+                <span class="total-price">{{cart.price}}</span>元
               </span>
             </li>
           </ul>
@@ -177,50 +153,98 @@
         <el-button @click="addVisible = false">取 消</el-button>
       </span>
     </el-dialog>
+    <el-dialog title="账户充值" :visible.sync="addVisible1" width="30%">
+      <el-form ref="form" :model="user_account" label-width="70px">
+        <el-form-item label="账号">
+          <span style="margin-right:5px">{{this.$store.getters.getUser.name}}</span>
+        </el-form-item>
+        <el-form-item label="充值金额">
+          <el-input v-model="user_account.account"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="reCharge">确 定</el-button>
+        <el-button @click="addVisible1 = false">取 消</el-button>
+      </span>
+    </el-dialog>
     <!-- 新建收货地址弹出框END -->
   </div>
 </template>
 <script>
 import { mapGetters } from 'vuex'
 import { mapActions } from 'vuex'
-import * as addressesAPI from '@/api/addresses'
-import * as ordersAPI from '@/api/orders'
-import * as cartsAPI from '@/api/carts'
+//import * as addressesAPI from '@/api/addresses'
+//import * as ordersAPI from '@/api/orders'
+//import * as cartsAPI from '@/api/carts'
 export default {
   name: '',
   data() {
     return {
       // 选择的地址id
-      confirmAddress: 0,
+      confirmAddress: -1,
       // 地址列表
       address: [],
+      addresslist:[{
+        id:0,
+        name:'11',
+        phone:1,
+        address:'address1'
+      },
+        {
+          id:1,
+          name:'11',
+          phone:1,
+          address:'address2'
+        }],
       addVisible: false,
+      addVisible1: false,
       form: {
         user_id: '',
         name: '',
         phone: '',
         address: ''
-      }
+      },
+      user_account: {
+        id:1,
+        account:'',
+      },
+      cart:'',
+      cartslist:
+        {
+          num:2,
+          price:11,
+          orderlistproduct:[{
+            product_id:1,
+            name:'product1',//product
+            num:1,//product
+            img_path:"../assets/imgs/error.png",
+            discount_price:2,
+          },
+            {
+              product_id:2,
+              name:'product2',//product
+              num:2,//product
+              img_path:"../assets/imgs/error.png",
+              discount_price:4,
+            }],
+          user_id:1,
+          user_account:2
+        }, // 结算列表
     }
   },
   created() {
-    // 如果没有勾选购物车商品直接进入确认订单页面,提示信息并返回购物车
-    if (this.getCheckNum < 1) {
-      this.notifyError('请勾选商品后再结算')
-      this.$router.push({ path: '/cart' })
-    }
-    this.getAddress()
-  },
-  computed: {
-    // 结算的商品数量; 结算商品总计; 结算商品信息
-    ...mapGetters(['getCheckNum', 'getTotalPrice', 'getCheckGoods'])
+    this.getAddress();
+    this.getOrder();
+
   },
   methods: {
-    ...mapActions(['deleteShoppingCart']),
     selectAddress(item) {
       this.confirmAddress = item.id
     },
     getAddress() {
+      this.address=this.addresslist;
+
+      /*
       addressesAPI
         .showAddresses(this.$store.getters.getUser.id)
         .then(res => {
@@ -236,62 +260,105 @@ export default {
         .catch(err => {
           this.notifyError('获取收货地址失败', err)
         })
+
+       */
     },
-    addOrder() {
-      if (this.confirmAddress === 0) {
+    getOrder() {
+      this.cart=this.cartslist;
+      /*
+      ordersAPI
+        .showOrder(this.orderNum)
+        .then(res => {
+          if (res.status === 200) {
+            this.order = res.data
+          } else if (res.status === 20001) {
+            //token过期，需要重新登录
+            this.loginExpired(res.msg)
+          } else {
+            this.notifyError('获取订单失败', res.msg)
+          }
+        })
+        .catch(err => {
+          this.notifyError('获取订单失败', err)
+        })
+
+       */
+    },
+
+    addOrder() {//结算
+      if (this.confirmAddress === -1) {
         this.notifyError('请选择收货地址', null)
         return
       }
-      let orders = this.getCheckGoods
-      for (let i = 0; i < orders.length; i++) {
-        var form = {
-          user_id: this.$store.getters.getUser.id,
-          product_id: orders[i].product_id,
-          num: orders[i].num,
-          address_id: this.confirmAddress
-        }
-        ordersAPI
-          .postOrder(form)
-          .then(res => {
-            if (res.status === 200) {
-              const temp = orders[i]
-              // 删除已经结算的购物车商品
-              var form1 = {
-                user_id: this.$store.getters.getUser.id,
-                product_id: temp.product_id
-              }
-              cartsAPI
-                .deleteCart(form1)
-                .then(res => {
-                  if (res.status === 200) {
-                    // 更新vuex状态
-                    this.deleteShoppingCart(temp.product_id)
-                  } else if (res.status === 20001) {
-                    //token过期，需要重新登录
-                    this.loginExpired(res.msg)
-                  } else {
-                    this.notifyError('购物车删除失败', res.msg)
-                  }
-                })
-                .catch(err => {
-                  this.notifyError('购物车删除失败', err)
-                })
-              // 跳转我的订单页面
-              this.$router.push({ path: '/order' })
-              this.notifySucceed('未付款的订单将于15分钟后删除')
-            } else if (res.status === 20001) {
-              //token过期，需要重新登录
-              this.loginExpired(res.msg)
-            } else {
-              this.notifyError('结算失败', res.msg)
+      else {
+
+
+        if (this.card.price <= this.card.user_account) {////money够就跳转
+          this.$router.push({ path: '/order' })
+          /*
+          let orders = this.getCheckGoods
+          for (let i = 0; i < orders.length; i++) {
+            var form = {
+              user_id: this.$store.getters.getUser.id,
+              product_id: orders[i].product_id,
+              num: orders[i].num,
+              address_id: this.confirmAddress
             }
-          })
-          .catch(err => {
-            this.notifyError('结算失败', err)
-          })
+            ordersAPI
+              .postOrder(form)
+              .then(res => {
+                if (res.status === 200) {
+                  const temp = orders[i]
+                  // 删除已经结算的购物车商品
+                  var form1 = {
+                   user_id: this.$store.getters.getUser.id,
+                   product_id: temp.product_id
+                }
+                cartsAPI
+                  .deleteCart(form1)
+                  .then(res => {
+                    if (res.status === 200) {
+                      // 更新vuex状态
+                      this.deleteShoppingCart(temp.product_id)
+                    } else if (res.status === 20001) {
+                      //token过期，需要重新登录
+                      this.loginExpired(res.msg)
+                    } else {
+                      this.notifyError('购物车删除失败', res.msg)
+                    }
+                  })
+                  .catch(err => {
+                    this.notifyError('购物车删除失败', err)
+                  })
+                // 跳转我的订单页面
+                this.$router.push({ path: '/order' })
+                this.notifySucceed('未付款的订单将于15分钟后删除')
+              } else if (res.status === 20001) {
+               //token过期，需要重新登录
+                this.loginExpired(res.msg)
+              } else {
+                this.notifyError('结算失败', res.msg)
+              }
+            })
+            .catch(err => {
+             this.notifyError('结算失败', err)
+            })
+        }
+      */
+        } else {
+          this.addVisible1 = true;
+        }
       }
     },
+    reCharge(){
+      this.user_account.id=this.cart.user_id;
+      //传user_account充值
+      this.addVisible1 = false
+    },
     postEdit() {
+      this.address=this.addresslist;
+      this.addVisible = false
+      /*
       this.form.user_id = this.$store.getters.getUser.id
       addressesAPI
         .postAddress(this.form)
@@ -310,6 +377,8 @@ export default {
         .catch(err => {
           this.notifyError('新建收货地址失败', err)
         })
+
+       */
     }
   }
 }
@@ -412,6 +481,8 @@ export default {
   font-size: 18px;
   line-height: 20px;
   margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid black;
 }
 .confirmOrder .confirm-content .address-body li {
   float: left;
@@ -465,8 +536,8 @@ export default {
 }
 .confirmOrder .confirm-content .section-goods .goods-list {
   padding: 5px 0;
-  border-top: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
 }
 .confirmOrder .confirm-content .section-goods .goods-list li {
   padding: 10px 0;

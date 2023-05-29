@@ -8,7 +8,10 @@
 
 export default {
   state: {
-    user: '' // 登录的用户
+    user: {
+      id:1,
+      name:"xj"
+    } // 登录的用户
   },
   getters: {
     getUser(state) {
