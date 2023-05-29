@@ -13,7 +13,7 @@
       <div class="topbar" v-show="$route.meta.showMenu!==false">
         <div class="nav">
           <ul>
-            <li v-if="!this.$store.getters.getUser">
+            <li v-if="!this.$store.getters.getUserid">
               <div style="margin-top:5px;font-size:16px">
                 <router-link to="/login">登录</router-link>
               </div>
@@ -21,13 +21,13 @@
             <li v-else class="header-user-con">
               <!-- 用户头像 -->
               <div class="user-avator">
-                <img :src="this.$store.getters.getUser.avatar" />
+                <img :src="this.$store.getters.getAvatar" />
               </div>
               <!-- 用户名下拉菜单 -->
               <div class="user-name">
                 <el-dropdown>
                   <span class="el-dropdown-link">
-                    {{this.$store.getters.getUser.nickname}}
+                    {{this.$store.getters.getUsername}}
                     <i class="el-icon-caret-bottom"></i>
                   </span>
                   <el-dropdown-menu slot="dropdown">
@@ -169,26 +169,45 @@ export default {
     document.querySelector('body').setAttribute('style', 'background:#f5f5f5')
   },
   created() {
+    if(localStorage.getItem('user_id')){
+      userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
+        if (res.code == 200) {
+          console.log(res.data[0])
+          this.setUserid(res.data[0].id)
+          this.setUsername(res.data[0].username)
+          this.setEmail(res.data[0].email)
+          this.setAvatar(res.data[0].avatar)
+          //this.setUser(res.data[0])
+
+        } else {
+          this.notifyError(res.message)
+          localStorage.removeItem('user_id')
+          localStorage.removeItem('token')
+        }
+      })
+    }
+
+
     // 获取浏览器localStorage，判断用户是否已经登录
-    userAPI.checkToken(localStorage.getItem('token')).then(res => {
-      // 如果已经登录，设置vuex登录状态
-      if (res.status == 200) {
-        this.setUser(JSON.parse(localStorage.getItem('user')))
-      } else {
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-      }
-    })
+    //userAPI.checkToken(localStorage.getItem('token')).then(res => {
+    //  // 如果已经登录，设置vuex登录状态
+    //  if (res.status == 200) {
+    //    this.setUser(JSON.parse(localStorage.getItem('user')))
+    //  } else {
+    //    localStorage.removeItem('user')
+    //    localStorage.removeItem('token')
+    //  }
+    //})
   },
   computed: {
-    ...mapGetters(['getUser', 'getNum']),
+    ...mapGetters(['getUserid', 'getNum', 'getAvatar', 'getUsername']),
     key() {
       return this.$route.path + Math.random()
     }
   },
   watch: {
     // 获取vuex的登录状态
-    getUser: function(val) {
+    getUserid: function(val) {
       if (val === '') {
         // 用户没有登录
         this.setShoppingCart([])
@@ -220,7 +239,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setUser', 'setShoppingCart']),
+    ...mapActions(['setUserid', 'setShoppingCart', 'setEmail', 'setAvatar', 'setUsername']),
     login() {
       this.$router.push({
         name: 'Login'
@@ -229,10 +248,13 @@ export default {
     // 退出登录
     logout() {
       // 清空本地登录信息
-      localStorage.removeItem('user')
+      localStorage.removeItem('user_id')
       localStorage.removeItem('token')
       // 清空vuex登录信息
-      this.setUser('')
+      this.setUserid('')
+      this.setAvatar('')
+      this.setEmail('')
+      this.setUsername('')
       this.$router.push({
         name: 'Home'
       })

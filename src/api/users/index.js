@@ -10,18 +10,45 @@ import axios from 'axios'
 
 //注册
 const postUser = form =>
-  axios.post('/api/v1/user/register', form).then(res => res.data)
+  axios.post('/api/user/register', form).then(res => res.data)
 //登录
 const postLogin = form =>
-  axios.post('/api/v1/user/login', form).then(res => res.data)
+  axios.post('/api/user/login', form).then(res => res.data)
+//忘记密码
+const changeCode = form =>
+  axios.post('/api/user/changePasswordByEmail', form).then(res => res.data)
+//忘记密码邮箱验证
+const changeCodeEmail = form =>
+  axios.post('/api/user/sendForgotPasswordEmail', form).then(res => res.data)
+//修改邮箱
+const changeEmail = form =>
+  axios.post('/api/user/modifyEmail', form,{
+    headers: {
+      token: localStorage.getItem("token"),
+    },
+  }).then(res => res.data)
+//获取登录信息
+const showInfo = form =>
+  axios.get('/api/user/showInfo', {
+    params: {
+      user_id: form.user_id
+    },
+    headers: {
+      token: localStorage.getItem("token"),
+    },
+  }).then(res => res.data)
 //检验token
 const checkToken = () => axios.get('/api/v1/ping').then(res => res.data)
 //修改信息
-const updateUser = form => axios.put('/api/v1/user', form).then(res => res.data)
+const updateUser = form => axios.post('/api/user/modifyUserInfo', form, {
+  headers: {
+    token: localStorage.getItem("token"),
+  },
+}).then(res => res.data)
 
-//发送邮件
+//发送验证码邮件
 const sendEmail = form =>
-  axios.post('/api/v1/user/sending-email', form).then(res => res.data)
+  axios.post('/api/user/sendRegistrationVerificationCode',form).then(res => res.data)
 
 //绑定或解绑邮箱
 const vaildEmail = val =>
@@ -40,6 +67,10 @@ const geetest = () => axios.get('/api/v1/geetest').then(res => res.data)
 export {
   postUser,
   postLogin,
+  changeCode,
+  changeCodeEmail,
+  changeEmail,
+  showInfo,
   checkToken,
   updateUser,
   sendEmail,

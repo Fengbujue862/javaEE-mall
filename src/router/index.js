@@ -33,6 +33,14 @@ const routes = [
     }
   },
   {
+    path: '/reset',
+    name: 'Reset',
+    component: () => import('../views/Reset.vue'),
+    meta: {
+      showMenu: false
+    }
+  },
+  {
     path: '/error',
     name: 'Error',
     component: () => import('../components/Error.vue')

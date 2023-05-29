@@ -18,37 +18,33 @@
             <!--个人信息头部-->
             <div class="center-user">
               <div class="user-avator">
-                <img :src="this.$store.getters.getUser.avatar" />
+                <img :src="this.$store.getters.getAvatar" />
               </div>
               <div class="user-info">
                 <p
                   style="font-size:25px;font-weight:100;color:#464547"
-                >{{this.$store.getters.getUser.nickname}}</p>
+                >{{this.$store.getters.getUsername}}</p>
                 <p>
                   <router-link to="/user/details" style="font-size:13px;color:#ff6700;">修改个人信息 ></router-link>
                 </p>
               </div>
               <div class="user-message">
                 <ul>
-                  <li>账户安全：</li>
-                  <li>绑定QQ：</li>
                   <li>绑定邮箱：</li>
                 </ul>
               </div>
               <div class="user-data">
                 <ul>
-                  <li>普通</li>
-                  <li>12345678910</li>
-                  <li v-if="this.$store.getters.getUser.email==''">
+                  <li v-if="this.$store.getters.getEmail ===''">
                     点此
                     <a href="javascript:;" @click="addVisible=true">绑定邮箱</a>
                   </li>
                   <li v-else>
-                    {{this.$store.getters.getUser.email}}
+                    {{this.$store.getters.getEmail}}
                     <a
                       href="javascript:;"
-                      @click="deleteVisible=true"
-                    >『解除绑定』</a>
+                      @click="changeVisible=true"
+                    >『修改绑定』</a>
                   </li>
                 </ul>
               </div>
@@ -95,38 +91,48 @@
               </div>
             </div>
           </div>
-          <!-- 绑定邮箱弹出框 -->
-          <el-dialog title="绑定邮箱" :visible.sync="addVisible" width="30%" center>
-            <el-form ref="form" :model="form" label-width="70px">
+          <!-- 修改邮箱弹出框 -->
+          <el-dialog title="修改邮箱" :visible.sync="changeVisible" width="25%" center>
+            <el-form ref="form" :model="form" >
+              <el-form-item
+                prop="password"
+                :rules="[{ required: true, message: '请输入账号密码', trigger: 'blur' }]"
+              >
+                <el-input v-model="form.password" type='password' placeholder="账号密码"></el-input>
+              </el-form-item>
               <el-form-item
                 prop="email"
-                label="邮箱"
                 :rules="[
-      { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+      { required: true, message: '请输入新邮箱地址', trigger: 'blur' },
       { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
     ]"
               >
-                <el-input v-model="form.email"></el-input>
+                <el-input v-model="form.email" placeholder="新邮箱地址"></el-input>
+              </el-form-item>
+              <el-form-item
+                prop="verifyCode"
+                :rules="[{ required: true, message: '请输入验证码', trigger: 'blur' }]"
+                style="width: 60%; display: inline-block;">
+                <el-input v-model="form.verifyCode" placeholder="验证码" ></el-input>
+              </el-form-item>
+              <el-form-item
+                prop="verifyCode"
+                style='display: inline-block; width: 40%; text-align: right;'>
+                <el-button
+                  @click="postEmail('form')"
+                  style='width: 95%; text-align: center; text-overflow: ellipsis; overflow: hidden;'
+                  :disabled="cannotClick">{{content}}</el-button>
               </el-form-item>
               <p>{{message}}</p>
             </el-form>
             <span slot="footer" class="dialog-footer">
               <el-button
                 type="primary"
-                @click="postEmail('form')"
-                :disabled="cannotClick"
-              >{{content}}</el-button>
+                @click="changeEmail('form')"
+              >确认修改</el-button>
             </span>
           </el-dialog>
           <!-- 绑定邮箱弹出框END -->
-          <!-- 绑定邮箱弹出框 -->
-          <el-dialog title="解除绑定" :visible.sync="deleteVisible" width="30%" center>
-            <p>{{deleteMessage}}</p>
-            <span slot="footer" class="dialog-footer">
-              <el-button type="primary" @click="deleteEmail()" :disabled="cannotClick">{{content}}</el-button>
-            </span>
-          </el-dialog>
-          <!-- 新建收货地址弹出框END -->
         </el-col>
       </el-row>
     </div>
@@ -136,84 +142,98 @@
 import CenterMenu from '../components/CenterMenu'
 import * as userAPI from '@/api/users'
 import * as countAPI from '@/api/count'
+import { mapActions , mapGetters} from 'vuex'
+import { changeEmail } from '@/api/users'
 export default {
   name: 'Center',
   data() {
     return {
+      clock: 0,
       favoriteTotal: 0,
       notPayTotal: 0,
       payTotal: 0,
       addVisible: false,
-      deleteVisible: false,
-      content: '发送验证邮件',
-      message: 'Cmall 将发送一封验证邮件到你的邮箱，此邮箱将作为您的绑定邮箱',
+      changeVisible: false,
+      content: '获取验证码',
+      message: 'Cmall 将发送一封验证邮件到你的新邮箱',
       deleteMessage: 'Cmall 将发送一封验证邮件到你的邮箱，此操作会解除邮箱绑定',
       cannotClick: false,
-      totalTime: 30,
+      totalTime: 60,
       form: {
-        user_id: 0,
+        password: '',
+        verifyCode: '',
         email: '',
-        //1:绑定，2:解绑
-        operation_type: 0
-      }
+      },
+      userInfo:{},
     }
   },
   methods: {
+    ...mapActions(['setEmail']),
+    changeEmail(formName){
+      this.$refs[formName].validate(valid => {
+          if (!valid) {
+            this.notifyError('请检查注册信息！！！')
+            return
+          }
+          this.changeVisible = false
+          userAPI.changeEmail(this.form).then(res => {
+            if (res.code == 200) {
+              this.notifySucceed('修改成功')
+              this.setEmail(this.form.email)
+              this.$refs[formName].resetFields()
+              if (this.totalTime !== 60) {
+                window.clearInterval(this.clock)
+                this.content = '发送验证码'
+                this.message =
+                  'Cmall 将发送一封验证邮件到你的邮箱，此邮箱将作为您的绑定邮箱'
+                this.deleteMessage =
+                  'Cmall 将发送一封验证邮件到你的邮箱，此操作会解除邮箱绑定'
+                this.totalTime = 60
+                this.cannotClick = false //这里重新开启
+              }
+            } else {
+              this.notifyError('修改失败', res.message)
+            }
+          })
+      })
+    },
     //按钮点击计时器
     countDown() {
       if (this.cannotClick) return //改动的是这两行代码
       this.cannotClick = true
       this.content = this.totalTime + 's后重新发送'
-      let clock = window.setInterval(() => {
+      this.clock = window.setInterval(() => {
         this.totalTime--
         this.content = this.totalTime + 's后重新发送'
         if (this.totalTime < 0) {
-          window.clearInterval(clock)
-          this.content = '重新发送验证邮件'
+          window.clearInterval(this.clock)
+          this.content = '发送验证码'
           this.message =
             'Cmall 将发送一封验证邮件到你的邮箱，此邮箱将作为您的绑定邮箱'
           this.deleteMessage =
             'Cmall 将发送一封验证邮件到你的邮箱，此操作会解除邮箱绑定'
-          this.totalTime = 30
+          this.totalTime = 60
           this.cannotClick = false //这里重新开启
         }
       }, 1000)
     },
     postEmail(formName) {
-      this.$refs[formName].validate(valid => {
-        if (!valid) {
-          return false
-        }
-        this.countDown()
-        this.form.operation_type = 1
-        this.form.user_id = this.$store.getters.getUser.id
+        //this.form.operation_type = 1
+        //this.form.user_id = this.$store.getters.getUser.id
         userAPI.sendEmail(this.form).then(res => {
-          if (res.status === 200) {
+          if (res.code == 200) {
+            //this.notifySucceed('已发送验证码')
+            this.countDown()
             this.message =
-              '验证邮件已发送到您的邮箱，15分钟内有效，如果没有收到，请检查垃圾邮件,如果还是没有收到，请重新填写邮箱'
+              '验证邮件已发送到您的邮箱，5分钟内有效，如果没有收到，请检查垃圾邮件,如果还是没有收到，请重新填写邮箱'
           } else {
-            this.notifyError('发送邮件失败', res.msg)
+            this.notifyError('发送邮件失败', res.message)
           }
-        })
-      })
-    },
-    deleteEmail() {
-      this.countDown()
-      this.form.operation_type = 2
-      this.form.user_id = this.$store.getters.getUser.id
-      this.form.email = this.$store.getters.getUser.email
-      userAPI.sendEmail(this.form).then(res => {
-        if (res.status === 200) {
-          this.deleteMessage =
-            '验证邮件已发送到您的邮箱，15分钟内有效，如果没有收到，请检查垃圾邮件,如果还是没有收到，请重新发送'
-        } else {
-          this.notifyError('发送邮件失败', res.msg)
-        }
       })
     },
     getCount() {
       countAPI
-        .showCount(this.$store.getters.getUser.id)
+        .showCount(localStorage.getItem('user_id'))
         .then(res => {
           if (res.status === 200) {
             this.favoriteTotal = res.data.favorite_total
@@ -229,13 +249,31 @@ export default {
         .catch(err => {
           this.notifyError('获取数量失败', err)
         })
-    }
+    },
+    getCode() {
+      userAPI
+        .sendEmail(this.form)
+        .then(res => {
+          if (res.code == 200) {
+            this.notifySucceed('已发送验证码')
+          } else {
+            this.notifyError(res.message)
+          }
+        })
+        .catch(error => {
+          this.notifyError('验证码发送失败', error)
+        })
+
+    },
   },
   created() {
     this.getCount()
   },
   components: {
     CenterMenu
+  },
+  computed:{
+    ...mapGetters(['getUsername', 'getEmail', 'getAvatar']),
   }
 }
 </script>

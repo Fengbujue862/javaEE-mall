@@ -23,24 +23,23 @@
               <el-form ref="form" :model="form" status-icon :rules="rules" label-width="80px">
                 <el-form-item label="头像:">
                   <el-upload
+                    action="#"
+                    accept="image/png,image/jpg,image/jpeg"
                     class="avatar-uploader"
-                    action
+                    :file-list="file"
                     label="描述"
                     ref="upload"
                     :before-upload="fnBeforeUpload"
                     :http-request="fnUploadRequest"
                     :show-file-list="false"
                   >
-                    <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+                    <img v-if="form.avatar" :src="form.avatar" class="avatar" />
                     <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                     <div class="el-upload__tip" slot="tip">点击上传头像,只能上传png/jpg文件，且不超过2M</div>
                   </el-upload>
                 </el-form-item>
-                <el-form-item prop="nickname" label="昵称:   ">
-                  <el-input v-model="form.nickname"></el-input>
-                </el-form-item>
-                <el-form-item prop="user_name" label="用户名:   ">
-                  <el-input v-model="form.user_name"></el-input>
+                <el-form-item prop="username" label="用户名:   ">
+                  <el-input v-model="form.username"></el-input>
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" style="margin-bottom:83px" @click="save('form')">保存</el-button>
@@ -58,41 +57,31 @@ import CenterMenu from '../components/CenterMenu'
 import { mapActions } from 'vuex'
 import * as uplpadAPI from '@/api/upload/'
 import * as userAPI from '@/api/users/'
+import th from 'element-ui/src/locale/lang/th'
 export default {
   name: 'Details',
   data() {
-    var validateNick = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入昵称'))
-      } else if (value.length < 2 || value.length > 10) {
-        callback(new Error('昵称长度需在2到10之间'))
-      }
-      callback()
-    }
     var validateUser = (rule, value, callback) => {
       if (value === '') {
-        callback(new Error('请输入用户名'))
+        callback()
       } else if (value.length < 5 || value.length > 15) {
         callback(new Error('用户名长度需在5到15之间'))
       }
       callback()
     }
     return {
-      imageUrl: '',
+      file: [],
       form: {
-        id: 0,
-        nickname: '',
         avatar: '',
-        user_name: ''
+        username: ''
       },
       rules: {
-        nickname: [{ validator: validateNick, trigger: 'blur' }],
-        user_name: [{ validator: validateUser, trigger: 'blur' }]
+        username: [{ validator: validateUser, trigger: 'blur' }]
       }
     }
   },
   methods: {
-    ...mapActions(['setUser']),
+    ...mapActions(['setUsername', 'setAvatar']),
     fnBeforeUpload(file) {
       const isPNG = file.type === 'image/png' || file.type === 'image/jpeg'
       const isLt2M = file.size / 1024 / 1024 < 2
@@ -105,26 +94,20 @@ export default {
       return isPNG && isLt2M
     },
     fnUploadRequest(option) {
+      console.log(option.file)
+      const fd = new FormData()
+      fd.append('file', option.file)
       uplpadAPI
-        .UploadAvatar(option.file.name)
+        .UploadAvatar(fd)
         .then(res => {
-          if (res.status === 200) {
-            const oReq = new XMLHttpRequest()
-            oReq.open('PUT', res.data.put, true)
-            oReq.send(option.file)
-            oReq.onload = () => {
-              this.imageUrl = res.data.get
-              this.form.avatar = res.data.key
-            }
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
+          if (res.code == 200) {
+            this.form.avatar = res.data[0].url
           } else {
-            this.notifyError('上传失败', res.msg)
+            this.notifyError('上传失败', res.message)
           }
         })
         .catch(error => {
-          this.notifyError('修改失败', error)
+          this.notifyError('上传失败', error)
         })
     },
     save(formName) {
@@ -132,22 +115,25 @@ export default {
         if (!valid) {
           return
         }
+        let payload = {}
+        if(this.form.avatar !== '') payload.avatar = this.form.avatar
+        if(this.form.username !== '') payload.username = this.form.username
+        if(this.form.avatar === '' && this.form.username === ''){
+          this.notifyError('修改内容不能为空')
+          return
+        }
         userAPI
-          .updateUser(this.form)
+          .updateUser(payload)
           .then(res => {
-            if (res.status === 200) {
+            if (res.code == 200) {
               // 登录信息存到本地
-              let user = JSON.stringify(res.data)
-              localStorage.setItem('user', user)
               // 登录信息存到vuex
-              this.setUser(res.data)
+              if(this.form.username !== '') this.setUsername(this.form.username)
+              if(this.form.avatar !== '') this.setAvatar(this.form.avatar)
               this.notifySucceed('修改成功')
               this.$router.push({
                 name: 'Center'
               })
-            } else if (res.status === 20001) {
-              //token过期，需要重新登录
-              this.loginExpired(res.msg)
             } else {
               this.notifyError('修改失败', res.msg)
             }
@@ -159,10 +145,8 @@ export default {
     }
   },
   beforeMount() {
-    this.form.id = this.$store.getters.getUser.id
-    this.form.user_name = this.$store.getters.getUser.user_name
-    this.form.nickname = this.$store.getters.getUser.nickname
-    this.imageUrl = this.$store.getters.getUser.avatar
+    //this.form.username = this.$store.getters.getUsername
+    //this.form.avatar = this.$store.getters.getAvatar
   },
   components: {
     CenterMenu
