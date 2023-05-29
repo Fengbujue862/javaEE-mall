@@ -83,9 +83,6 @@
           <el-menu-item index="/">首页</el-menu-item>
           <el-menu-item index="/goods">全部商品</el-menu-item>
           <el-menu-item index="/about">关于我们</el-menu-item>
-          <a href="https://congz666.gitee.io/" target="_blank">
-            <el-menu-item :index="0">个人博客</el-menu-item>
-          </a>
           <div class="so">
             <el-input placeholder="请输入搜索内容" v-model="search">
               <el-button slot="append" icon="el-icon-search" @click="searchClick"></el-button>
@@ -116,11 +113,6 @@
               </p>
             </div>
           </div>
-          <div class="github">
-            <a href="https://github.com/congz666/cmall-go" target="_blank">
-              <div class="github-but"></div>
-            </a>
-          </div>
           <div class="mod_help">
             <p>
               <router-link to="/">首页</router-link>
@@ -129,18 +121,6 @@
               <span>|</span>
               <router-link to="/about">关于我们</router-link>
             </p>
-            <p>
-              Copyright ©2020, congz.top 本网站设计内容大部分属小米商城
-              <iframe
-                style="margin-left: 2px; margin-bottom:-5px;"
-                frameborder="0"
-                scrolling="0"
-                width="91px"
-                height="20px"
-                src="https://ghbtns.com/github-btn.html?user=congz666&repo=cmall-go&type=star&count=true"
-              ></iframe>
-            </p>
-            <a href="http://www.beian.miit.gov.cn/" target="_blank">粤ICP备20067893号</a>
           </div>
         </div>
       </el-footer>

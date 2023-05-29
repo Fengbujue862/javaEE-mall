@@ -186,6 +186,7 @@ export default {
   },
   activated() {
     // 获取首页数据
+    console.log()
     this.load()
   },
   methods: {

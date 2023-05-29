@@ -157,6 +157,11 @@ const routes = [
     meta: {
       showMenu: false
     }
+  },
+  {
+    path: '/test',
+    name: 'test',
+    component: () => import('../views/test.vue'),
   }
 ]
 
