@@ -7,8 +7,8 @@
 -->
 
 <template>
-  <div id="details" v-if="productDetails">
-    <!-- 头部 -->
+  <div id="details" >
+    <!-- 头部 v-if="productDetails"-->
     <div class="page-header">
       <div class="title">
         <p>{{ productDetails.name }}</p>
@@ -118,7 +118,7 @@
       <img v-lazy="item.img_path" />
     </div>
   </div>
-  <div class="not-found" v-else>查询不到该商品</div>
+<!--  <div class="not-found" v-else>查询不到该商品</div>-->
 </template>
 <script>
 import { mapActions } from 'vuex'
@@ -228,32 +228,32 @@ export default {
           this.notifyError('添加购物车失败', err)
         })
     },
-    addFavorite() {
-      // 判断是否登录,没有登录则显示登录组件
-      if (!this.$store.getters.getUser) {
-        this.$router.push({ name: 'Login' })
-        return
-      }
-      var form = {
-        user_id: this.$store.getters.getUser.id,
-        product_id: Number(this.productID)
-      }
-      favoritesAPI
-        .postFavorite(form)
-        .then(res => {
-          if (res.status === 200) {
-            this.notifySucceed('添加收藏夹成功')
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
-          } else {
-            this.notifyError('添加收藏夹失败', res.msg)
-          }
-        })
-        .catch(err => {
-          this.notifyError('添加收藏夹失败', err)
-        })
-    }
+    // addFavorite() {
+    //   // 判断是否登录,没有登录则显示登录组件
+    //   if (!this.$store.getters.getUser) {
+    //     this.$router.push({ name: 'Login' })
+    //     return
+    //   }
+    //   var form = {
+    //     user_id: this.$store.getters.getUser.id,
+    //     product_id: Number(this.productID)
+    //   }
+    //   favoritesAPI
+    //     .postFavorite(form)
+    //     .then(res => {
+    //       if (res.status === 200) {
+    //         this.notifySucceed('添加收藏夹成功')
+    //       } else if (res.status === 20001) {
+    //         //token过期，需要重新登录
+    //         this.loginExpired(res.msg)
+    //       } else {
+    //         this.notifyError('添加收藏夹失败', res.msg)
+    //       }
+    //     })
+    //     .catch(err => {
+    //       this.notifyError('添加收藏夹失败', err)
+    //     })
+    // }
   },
   beforeRouteEnter(to, from, next) {
     // 添加背景色
