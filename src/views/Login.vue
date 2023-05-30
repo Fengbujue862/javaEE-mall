@@ -18,44 +18,35 @@
         </div>
         <div class="item">
           <el-form :model="form" status-icon :rules="rules" ref="form">
-            <el-form-item prop="user_name">
-              <el-input v-model="form.user_name" placeholder="用户名"></el-input>
+            <el-form-item prop="username">
+              <el-input v-model="form.username" placeholder="用户名"></el-input>
             </el-form-item>
             <el-form-item prop="password">
               <el-input type="password" v-model="form.password" placeholder="密码"></el-input>
             </el-form-item>
           </el-form>
-          <div id="captcha">
-            <p id="wait">正在加载验证码...</p>
-          </div>
           <div style="margin-top:15px">
             <a href="javascript:;" class="btn-gradient blue block" @click="login('form')">登录</a>
           </div>
           <el-link
             type="primary"
+            href="/#/reset"
+            style='margin:10px 0;float: left'>
+            忘记密码？
+          </el-link>
+          <el-link
+            type="primary"
             href="/#/register"
-            style="float:right;margin-bottom:10px;"
-          >没有账号？请先注册></el-link>
-        </div>
-        <div class="line"></div>
-        <div class="logo">
-          <div class="logo-info">其他账号登录:</div>
-          <div class="logo-login">
-            <div @click="qqInit">
-              <img src="../assets/imgs/QQlogo.png" alt />
-            </div>
-          </div>
+            style="float:right;margin:10px;"
+          >注册账号></el-link>
         </div>
       </el-card>
     </div>
   </div>
 </template>
-<script src="../assets/gt.js"></script>
 <script>
 import { mapActions } from 'vuex'
 import * as userAPI from '@/api/users'
-require('../assets/gt.js')
-var captcha
 export default {
   name: 'Login',
   data() {
@@ -77,11 +68,8 @@ export default {
     }
     return {
       form: {
-        user_name: '',
+        username: '',
         password: '',
-        challenge: '',
-        validate: '',
-        seccode: ''
       },
       rules: {
         user_name: [{ validator: validateUser, trigger: 'blur' }],
@@ -90,77 +78,48 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setUser']),
+    ...mapActions(['setUsername', 'setUserid', 'setAvatar', 'setEmail']),
+    getInfo(){
+      userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
+        if (res.code == 200) {
+          //this.setUser(res.data[0])
+          this.setUserid(res.data[0].id)
+          this.setUsername(res.data[0].username)
+          this.setEmail(res.data[0].email)
+          this.setAvatar(res.data[0].avatar)
+        } else {
+          this.notifyError(res.message)
+          localStorage.removeItem('user_id')
+          localStorage.removeItem('token')
+        }
+      })
+    },
     login(formName) {
       this.$refs[formName].validate(valid => {
         if (!valid) {
           return
         }
-        var result = captcha.getValidate()
-        if (!result) {
-          this.notifyError('请验证', null)
-          return
-        }
-        ;(this.form.challenge = result.geetest_challenge),
-          (this.form.validate = result.geetest_validate),
-          (this.form.seccode = result.geetest_seccode),
           userAPI
             .postLogin(this.form)
             .then(res => {
-              if (res.status === 404) {
-                this.notifyError('验证失败', res.msg)
-              } else if (res.status === 200) {
-                // 登录信息存到本地
-                let user = JSON.stringify(res.data.user)
-                localStorage.setItem('user', user)
-                localStorage.setItem('token', res.data.token)
+              if (res.code == 200){
+                let user = res.data[0].user_id
+                localStorage.setItem('user_id', user)
+                localStorage.setItem('token', res.data[0].token)
                 // 登录信息存到vuex
-                this.setUser(res.data.user)
+                this.getInfo()
                 // 弹出通知框提示登录成功信息
                 this.notifySucceed('登录成功')
                 this.$router.push({
                   name: 'Home'
                 })
-              } else {
-                this.notifyError('登录失败', res.msg)
-              }
+              } else this.notifyError(res.message)
             })
             .catch(error => {
               this.notifyError('登录失败', error)
             })
       })
     },
-    qqInit() {
-      userAPI.qqInit().then(res => {
-        if (res.status === 200) {
-          window.location.href = res.data
-        }
-      })
-    },
-    init_geetest() {
-      userAPI.geetest().then(res => {
-        window.initGeetest(
-          {
-            gt: res.gt,
-            challenge: res.challenge,
-            new_captcha: res.new_captcha,
-            offline: !res.success,
-            product: 'popup',
-            width: '100%'
-          },
-          function(captchaObj) {
-            captcha = captchaObj
-            captchaObj.appendTo('#captcha')
-            captchaObj.onReady(function() {
-              document.getElementById('wait').style.display = 'none'
-            })
-          }
-        )
-      })
-    }
-  },
-  mounted() {
-    this.init_geetest()
   },
 
   components: {}

@@ -18,13 +18,28 @@
             <div class="user-pass-title">
               <p>修改密码</p>
             </div>
-            <div class="user-pass-form" v-if="this.$store.getters.getUser.email">
+            <div class="user-pass-form" v-if="this.$store.getters.getEmail">
               <el-form :model="form" status-icon :rules="rules" ref="form" label-width="80px">
-                <el-form-item label="密码" prop="password">
-                  <el-input type="password" v-model="form.password" autocomplete="off"></el-input>
+                <el-form-item label="密码" prop="password1">
+                  <el-input type="password" v-model="form.password1" autocomplete="off"></el-input>
                 </el-form-item>
-                <el-form-item label="确认密码" prop="password_confirm">
-                  <el-input type="password" v-model="form.password_confirm" autocomplete="off"></el-input>
+                <el-form-item label="确认密码" prop="password2">
+                  <el-input type="password" v-model="form.password2" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item
+                  label="验证码"
+                  style="width: 70%; display: inline-block;"
+                  prop="verifyCode">
+                  <el-input v-model="form.verifyCode" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item
+                  label-width='0'
+                  style='display: inline-block; width: 30%; text-align: right;'>
+                  <el-button
+                    @click="getCode()"
+                    :disabled="cannotClick"
+                    style='width: 95%; text-align: center; text-overflow: ellipsis; overflow: hidden;'
+                    >{{content}}</el-button>
                 </el-form-item>
                 <p
                   style="margin-left:20px;margin-bottom:10px;color:#757575;font-size:15px"
@@ -33,8 +48,8 @@
                   <el-button
                     type="primary"
                     @click="submitForm('form')"
-                    :disabled="cannotClick"
-                  >{{content}}</el-button>
+
+                  >修改密码</el-button>
                   <el-button @click="resetForm('form')">重置</el-button>
                 </el-form-item>
               </el-form>
@@ -73,45 +88,70 @@ export default {
     var validatePass2 = (rule, value, callback) => {
       if (value === '') {
         callback(new Error('请再次输入密码'))
-      } else if (value !== this.form.password) {
+      } else if (value !== this.form.password1) {
         callback(new Error('两次输入密码不一致!'))
+      } else {
+        callback()
+      }
+    }
+    var validateVerifyCode = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入验证码'))
       } else {
         callback()
       }
     }
     return {
       form: {
-        password: '',
-        password_confirm: '',
-        user_id: 0,
+        password1: '',
+        password2: '',
+        verifyCode: '',
         email: '',
-        operation_type: 0
+        modify: true
       },
+      clock: '',
       rules: {
-        password: [{ validator: validatePass, trigger: 'blur' }],
-        password_confirm: [{ validator: validatePass2, trigger: 'blur' }]
+        password1: [{ validator: validatePass, trigger: 'blur' }],
+        password2: [{ validator: validatePass2, trigger: 'blur' }],
+        verifyCode: [{ validator: validateVerifyCode, trigger: 'blur' }]
       },
-      content: '发送验证邮件',
+      content: '发送验证码',
       cannotClick: false,
-      totalTime: 30,
+      totalTime: 60,
       message: 'Cmall 将发送一封验证邮件到账号绑定邮箱，此操作会更改账号密码'
     }
   },
   methods: {
+    getCode(){
+      userAPI
+        .changeCodeEmail({ email : this.$store.getters.getEmail})
+        .then(res => {
+          if (res.code == 200) {
+            this.notifySucceed('已发送验证码')
+            this.countDown()
+          } else {
+            this.notifyError(res.message)
+          }
+        })
+        .catch(error => {
+          this.notifyError('验证码发送失败', error)
+        })
+
+    },
     //按钮点击计时器
     countDown() {
       if (this.cannotClick) return //改动的是这两行代码
       this.cannotClick = true
       this.content = this.totalTime + 's后重新发送'
-      let clock = window.setInterval(() => {
+      this.clock = window.setInterval(() => {
         this.totalTime--
         this.content = this.totalTime + 's后重新发送'
         if (this.totalTime < 0) {
-          window.clearInterval(clock)
-          this.content = '重新发送验证邮件'
+          window.clearInterval(this.clock)
+          this.content = '发送验证码'
           this.message =
             'Cmall 将发送一封验证邮件到账号绑定邮箱，此操作会更改账号密码'
-          this.totalTime = 30
+          this.totalTime = 60
           this.cannotClick = false //这里重新开启
         }
       }, 1000)
@@ -119,14 +159,20 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          this.countDown()
-          this.form.operation_type = 3
-          this.form.user_id = this.$store.getters.getUser.id
-          this.form.email = this.$store.getters.getUser.email
-          userAPI.sendEmail(this.form).then(res => {
-            if (res.status === 200) {
+          this.form.email = this.$store.getters.getEmail
+          userAPI.changeCode(this.form).then(res => {
+            if (res.code == 200) {
               this.message =
-                '验证邮件已发送到您的邮箱，15分钟内有效，如果没有收到，请检查垃圾邮件,如果还是没有收到，请重新发送'
+                'Cmall 将发送一封验证邮件到账号绑定邮箱，此操作会更改账号密码'
+              this.notifySucceed('密码修改成功')
+              if (this.totalTime !== 60) {
+                window.clearInterval(this.clock)
+                this.content = '发送验证码'
+                this.message =
+                  'Cmall 将发送一封验证邮件到账号绑定邮箱，此操作会更改账号密码'
+                this.totalTime = 60
+                this.cannotClick = false //这里重新开启
+              }
             } else {
               this.notifyError('发送邮件失败', res.msg)
             }

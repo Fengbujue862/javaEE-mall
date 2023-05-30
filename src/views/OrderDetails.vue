@@ -18,28 +18,28 @@
               <p>订单详情</p>
             </div>
             <div class="order-operate">
-              <span class="order-num">订单号：{{order.order_id}}</span>
-              <span class="order-success-info">已付款:{{order.created_at}}</span>
+              <span class="order-num">订单号：{{order.id}}</span>
+              <span class="order-success-info">已付款:{{order.createTime}}</span>
             </div>
 
-            <div class="order-list-product" v-for="(item,index) in order.orderlistproduct" :key="index">
+            <div class="order-list-product" v-for="(item,index) in order.goodsInfo" :key="index">
               <div class="pro-img">
-                <router-link :to="{ path: '/goods/details', query: {productID:item.product_id} }">
-                  <img :src="item.img_path" />
+                <router-link :to="{ path: '/goods/details', query: {productID:item.goods.id} }">
+                  <img :src="item.goods.picture" />
                 </router-link>
               </div>
               <div class="pro-info">
                 <span style="margin-bottom:7px">
                   <router-link
                     class="info-href"
-                    :to="{ path: '/goods/details', query: {productID:item.product_id} }"
-                  >{{item.name}}</router-link>
+                    :to="{ path: '/goods/details', query: {productID:item.goods.id} }"
+                  >{{item.goods.name}}</router-link>
                 </span>
               </div>
               <div class="pro-price">
                 <span>
-                  {{item.discount_price}} 元&nbsp;×
-                  {{item.num}}
+                  {{item.goods.price}} 元&nbsp;×
+                  {{item.amount}}
                 </span>
               </div>
             </div>
@@ -51,8 +51,8 @@
                 <p>收货地址：</p>
               </div>
               <div class="order-address-data">
-                <p>{{order.address_name}}</p>
-                <p>{{order.address_phone}}</p>
+                <p>{{name}}</p>
+                <p>{{phone}}</p>
                 <p>{{order.address}}</p>
               </div>
             </div>
@@ -60,10 +60,6 @@
             <div class="section-count">
               <div class="money-box">
                 <ul>
-                  <li>
-                    <span class="title">商品件数：</span>
-                    <span class="value">{{order.num}}件</span>
-                  </li>
                   <li>
                     <span class="title">商品总价：</span>
                     <span class="value">{{order.price}}元</span>
@@ -90,44 +86,30 @@
 </template>
 <script>
 import CenterMenu from '../components/CenterMenu'
-//import * as ordersAPI from '@/api/orders'
 export default {
   name: 'OrderDetails',
   data() {
     return {
-      orderNum: '', // 订单num,
       order: '',
-      address: '',
-      orderslist:
-        {
-          order_id:1,//订单号
-          created_at:'2023-5-25 16:07',//订单创建时间
-          num:2,
-          price:11,
-          address_name:'what',//收货人
-          address_phone:1,
-          address:'11',
-          orderlistproduct:[{
-            product_id:1,
-            name:'product1',//product
-            num:1,//product
-            img_path:"../assets/imgs/error.png",
-            discount_price:2,
-          }],
-          user_id:1,
-        }, // 订单列表
+      name:'',
+      phone:'',
+      orderslist:{
+        id:'',
+        createTime:'',
+        price:'',
+        address:'',
+        goodsInfo:[]
+      },// 订单列表
     }
   },
-  activated() {
-    if (this.$route.query.orderNum != undefined) {
-      this.orderNum = this.$route.query.orderNum
-    }
-  },
-  watch: {
-    // 监听商品id的变化，请求后端获取商品数据
-    orderNum: function() {
-      this.load()
-    }
+  beforeMount() {
+    this.orderslist.id=this.$store.getters.getOrderid
+    this.orderslist.createTime=this.$store.getters.getCreatetime
+    this.orderslist.price=this.$store.getters.getPrice
+    this.orderslist.address=this.$store.getters.getAddress
+    this.orderslist.goodsInfo=this.$store.getters.getGoodsinfo
+    //console.log(this.orderslist)
+    this.load()
   },
   methods: {
     load() {
@@ -195,7 +177,7 @@ export default {
 /*进度条区域*/
 .order-details-content .order-success-info {
   width: 920px;
-  margin-left: 600px;
+  margin-left: 470px;
   color: #00a724;
   font-size: 18px;
 }

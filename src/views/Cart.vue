@@ -55,9 +55,9 @@
     <!-- 购物车头部END -->
 
     <!-- 购物车主要内容区 -->
-    <div class="cart-content" v-if="getShoppingCart.length>0">
+    <div class="cart-content">
       <ul>
-        <!-- 购物车表头 -->
+        <!-- 购物车表头  v-if="getShoppingCart.length>0"-->
         <li class="content-header">
           <div class="pro-check">
             <el-checkbox v-model="isAllCheck">全选</el-checkbox>
@@ -142,12 +142,12 @@
     <!-- 购物车主要内容区END -->
 
     <!-- 购物车为空的时候显示的内容 -->
-    <div v-else class="cart-empty">
-      <div class="empty">
-        <h2>您的购物车还是空的！</h2>
-        <p>快去购物吧！</p>
-      </div>
-    </div>
+<!--    <div v-else class="cart-empty">-->
+<!--      <div class="empty">-->
+<!--        <h2>您的购物车还是空的！</h2>-->
+<!--        <p>快去购物吧！</p>-->
+<!--      </div>-->
+<!--    </div>-->
     <!-- 购物车为空的时候显示的内容END -->
   </div>
 </template>

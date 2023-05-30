@@ -13,7 +13,7 @@
       <div class="topbar" v-show="$route.meta.showMenu!==false">
         <div class="nav">
           <ul>
-            <li v-if="!this.$store.getters.getUser">
+            <li v-if="!this.$store.getters.getUserid">
               <div style="margin-top:5px;font-size:16px">
                 <router-link to="/login">登录</router-link>
               </div>
@@ -21,13 +21,13 @@
             <li v-else class="header-user-con">
               <!-- 用户头像 -->
               <div class="user-avator">
-                <img :src="this.$store.getters.getUser.avatar" />
+                <img :src="this.$store.getters.getAvatar" />
               </div>
               <!-- 用户名下拉菜单 -->
               <div class="user-name">
                 <el-dropdown>
                   <span class="el-dropdown-link">
-                    {{this.$store.getters.getUser.nickname}}
+                    {{this.$store.getters.getUsername}}
                     <i class="el-icon-caret-bottom"></i>
                   </span>
                   <el-dropdown-menu slot="dropdown">
@@ -83,9 +83,6 @@
           <el-menu-item index="/">首页</el-menu-item>
           <el-menu-item index="/goods">全部商品</el-menu-item>
           <el-menu-item index="/about">关于我们</el-menu-item>
-          <a href="https://congz666.gitee.io/" target="_blank">
-            <el-menu-item :index="0">个人博客</el-menu-item>
-          </a>
           <div class="so">
             <el-input placeholder="请输入搜索内容" v-model="search">
               <el-button slot="append" icon="el-icon-search" @click="searchClick"></el-button>
@@ -116,11 +113,6 @@
               </p>
             </div>
           </div>
-          <div class="github">
-            <a href="https://github.com/congz666/cmall-go" target="_blank">
-              <div class="github-but"></div>
-            </a>
-          </div>
           <div class="mod_help">
             <p>
               <router-link to="/">首页</router-link>
@@ -129,18 +121,6 @@
               <span>|</span>
               <router-link to="/about">关于我们</router-link>
             </p>
-            <p>
-              Copyright ©2020, congz.top 本网站设计内容大部分属小米商城
-              <iframe
-                style="margin-left: 2px; margin-bottom:-5px;"
-                frameborder="0"
-                scrolling="0"
-                width="91px"
-                height="20px"
-                src="https://ghbtns.com/github-btn.html?user=congz666&repo=cmall-go&type=star&count=true"
-              ></iframe>
-            </p>
-            <a href="http://www.beian.miit.gov.cn/" target="_blank">粤ICP备20067893号</a>
           </div>
         </div>
       </el-footer>
@@ -169,26 +149,45 @@ export default {
     document.querySelector('body').setAttribute('style', 'background:#f5f5f5')
   },
   created() {
+    if(localStorage.getItem('user_id')){
+      userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
+        if (res.code == 200) {
+          console.log(res.data[0])
+          this.setUserid(res.data[0].id)
+          this.setUsername(res.data[0].username)
+          this.setEmail(res.data[0].email)
+          this.setAvatar(res.data[0].avatar)
+          //this.setUser(res.data[0])
+
+        } else {
+          this.notifyError(res.message)
+          localStorage.removeItem('user_id')
+          localStorage.removeItem('token')
+        }
+      })
+    }
+
+
     // 获取浏览器localStorage，判断用户是否已经登录
-    userAPI.checkToken(localStorage.getItem('token')).then(res => {
-      // 如果已经登录，设置vuex登录状态
-      if (res.status == 200) {
-        this.setUser(JSON.parse(localStorage.getItem('user')))
-      } else {
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-      }
-    })
+    //userAPI.checkToken(localStorage.getItem('token')).then(res => {
+    //  // 如果已经登录，设置vuex登录状态
+    //  if (res.status == 200) {
+    //    this.setUser(JSON.parse(localStorage.getItem('user')))
+    //  } else {
+    //    localStorage.removeItem('user')
+    //    localStorage.removeItem('token')
+    //  }
+    //})
   },
   computed: {
-    ...mapGetters(['getUser', 'getNum']),
+    ...mapGetters(['getUserid', 'getNum', 'getAvatar', 'getUsername']),
     key() {
       return this.$route.path + Math.random()
     }
   },
   watch: {
     // 获取vuex的登录状态
-    getUser: function(val) {
+    getUserid: function(val) {
       if (val === '') {
         // 用户没有登录
         this.setShoppingCart([])
@@ -220,7 +219,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setUser', 'setShoppingCart']),
+    ...mapActions(['setUserid', 'setShoppingCart', 'setEmail', 'setAvatar', 'setUsername']),
     login() {
       this.$router.push({
         name: 'Login'
@@ -229,10 +228,13 @@ export default {
     // 退出登录
     logout() {
       // 清空本地登录信息
-      localStorage.removeItem('user')
+      localStorage.removeItem('user_id')
       localStorage.removeItem('token')
       // 清空vuex登录信息
-      this.setUser('')
+      this.setUserid('')
+      this.setAvatar('')
+      this.setEmail('')
+      this.setUsername('')
       this.$router.push({
         name: 'Home'
       })

@@ -28,9 +28,9 @@
                   <span class="order-pay">已付款</span>
                   <span class="operate">
                       <router-link
-                        :to="{ path: '/order/details', query: {orderNum:item.order_id} }"
+                        :to="{ path: '/order/details'}"
                       >
-                        <el-button plain class="button-detail">订单详情</el-button>
+                        <el-button plain class="button-detail" @click='getDetails(item.id)'>订单详情</el-button>
                       </router-link>
                   </span>
                   <div class="order-info">
@@ -51,22 +51,22 @@
                 <div class="order-list-product" v-for="(item1,index) in item.goodsInfo" :key="index">
                   <div class="pro-img">
                     <router-link
-                      :to="{ path: '/goods/details', query: {productID:item1.id} }"
+                      :to="{ path: '/goods/details', query: {productID:item1.goods.id} }"
                     >
-                      <img :src="item1.picture" />
+                      <img :src="item1.goods.picture" />
                     </router-link>
                   </div>
                   <div class="pro-info">
                     <span style="margin-bottom:7px">
                       <router-link
                         class="info-href"
-                        :to="{ path: '/goods/details', query: {productID:item1.id} }"
-                      >{{item1.name}}</router-link>
+                        :to="{ path: '/goods/details', query: {productID:item1.goods.id} }"
+                      >{{item1.goods.name}}</router-link>
                     </span>
                   </div>
                   <div style='margin-left: 110px'>
                     <span>
-                      {{item1.price}} 元&nbsp;×
+                      {{item1.goods.price}} 元&nbsp;×
                       {{item1.amount}}
                     </span>
                   </div>
@@ -91,7 +91,8 @@
 </template>
 <script>
 import CenterMenu from '../components/CenterMenu'
-import axios from 'axios'
+import { mapActions } from 'vuex'
+//import axios from 'axios'
 export default {
   name: 'Order',
   data() {
@@ -99,34 +100,82 @@ export default {
       orders:[],
       list: [
       {
-        "address": "string",
+        "address": "address1",
         "createTime": "2023-05-29T13:19:08.422Z",
         "goodsInfo": [
         {
-          "amount": "string",
+          "amount": "1",
           "goods": {
-            "amount": "string",
+            "amount": "2",
             "createTime": "2023-05-29T13:19:08.422Z",
             "description": "string",
             "discount": "string",
             "id": "string",
             "modifyTime": "2023-05-29T13:19:08.422Z",
-            "name": "string",
+            "name": "good1",
             "originalPrice": "string",
             "picture": "string",
-            "price": "string",
+            "price": "2",
             "sales": "string",
             "state": "string",
             "type": "string",
             "viewCnt": "string"
           }
         }],
-        "id": "string",
+        "id": "123",
         "modifyTime": "2023-05-29T13:19:08.422Z",
-        "price": "string",
+        "price": "100",
         "state": "string",
         "userId": "string"
-      }],// 订单列表
+      },
+        {
+          "address": "address1",
+          "createTime": "2023-05-29T13:19:08.422Z",
+          "goodsInfo": [
+            {
+              "amount": "1",
+              "goods": {
+                "amount": "2",
+                "createTime": "2023-05-29T13:19:08.422Z",
+                "description": "string",
+                "discount": "string",
+                "id": "string",
+                "modifyTime": "2023-05-29T13:19:08.422Z",
+                "name": "good1",
+                "originalPrice": "string",
+                "picture": "string",
+                "price": "2",
+                "sales": "string",
+                "state": "string",
+                "type": "string",
+                "viewCnt": "string"
+              }
+            },
+            {
+              "amount": "1",
+              "goods": {
+                "amount": "2",
+                "createTime": "2023-05-29T13:19:08.422Z",
+                "description": "string",
+                "discount": "string",
+                "id": "string",
+                "modifyTime": "2023-05-29T13:19:08.422Z",
+                "name": "good2",
+                "originalPrice": "string",
+                "picture": "string",
+                "price": "2",
+                "sales": "string",
+                "state": "string",
+                "type": "string",
+                "viewCnt": "string"
+              }
+            }],
+          "id": "124",
+          "modifyTime": "2023-05-29T13:19:08.422Z",
+          "price": "100",
+          "state": "string",
+          "userId": "string"
+        }],// 订单列表
     }
   },
   activated() {
@@ -139,30 +188,48 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['setOrderid', 'setCreatetime','setPrice','setAddress','setGoodsinfo']),
+    getDetails(id){
+      let i=0;
+      for(i=0;i<this.list.length;i++){
+        if(this.list[i].id===id){
+          this.setOrderid(this.list[i].id);
+          this.setCreatetime(this.list[i].createTime);
+          this.setPrice(this.list[i].price);
+          this.setAddress(this.list[i].address)
+          this.setGoodsinfo(this.list[i].goodsInfo);
+          break;
+        }
+      }
+    },
     getOrders() {
-      // 获取订单数据
-      this.orders=this.orderslist;
-      this.total=2;
+      this.orders=this.list;
+      /*
       axios.get('http://82.156.143.194:8090/shopping/listOrders', {
         params: {
+          state:"PAID",
           page:1,
-          limit:100
-        }
-      }).then(res =>{
+          limit:100,
+        },
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
           if (res.status === 200) {
             this.orders = res.data.list
             this.total = res.data.total
+            if(this.orders.id !== '') this.setUsername(this.form.username)
           } else if (res.status === 401) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
+            this.loginExpired(res.message)
           } else {
-            this.notifyError('获取订单失败', res.msg)
+            this.notifyError('获取订单失败', res.message)
           }
         })
         .catch(err => {
           this.notifyError('获取订单失败', err)
         })
 
+       */
     }
   },
   components: {

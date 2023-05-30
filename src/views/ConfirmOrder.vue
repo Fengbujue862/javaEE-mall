@@ -173,6 +173,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { mapActions } from 'vuex'
+import axios from 'axios'
 //import * as addressesAPI from '@/api/addresses'
 //import * as ordersAPI from '@/api/orders'
 //import * as cartsAPI from '@/api/carts'
@@ -243,7 +244,6 @@ export default {
     },
     getAddress() {
       this.address=this.addresslist;
-
       /*
       addressesAPI
         .showAddresses(this.$store.getters.getUser.id)
@@ -291,8 +291,6 @@ export default {
         return
       }
       else {
-
-
         if (this.card.price <= this.card.user_account) {////money够就跳转
           this.$router.push({ path: '/order' })
           /*
@@ -352,12 +350,50 @@ export default {
     },
     reCharge(){
       this.user_account.id=this.cart.user_id;
-      //传user_account充值
+      axios.post('http://82.156.143.194:8090/shopping/recharge', {
+        params: {
+          value:this.user_account.account
+        },
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        if (res.status === 200) {
+          this.notifySucceed('充值成功')
+        } else if (res.status === 401) {
+          this.loginExpired(res.message)
+        } else {
+          this.notifyError('充值失败', res.message)
+        }
+      })
+        .catch(err => {
+          this.notifyError('充值失败', err)
+        })
       this.addVisible1 = false
     },
     postEdit() {
-      this.address=this.addresslist;
-      this.addVisible = false
+      //this.address=this.addresslist;
+      axios.post('http://82.156.143.194:8090/user/addAddress', {
+        params: {
+          value:this.form.address
+        },
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        if (res.status === 200) {
+          this.notifySucceed('添加成功')
+          this.address.unshift(this.form);
+          this.addVisible=false
+        } else if (res.status === 401) {
+          this.loginExpired(res.message)
+        } else {
+          this.notifyError('添加失败', res.message)
+        }
+      })
+        .catch(err => {
+          this.notifyError('添加失败', err)
+        })
       /*
       this.form.user_id = this.$store.getters.getUser.id
       addressesAPI
