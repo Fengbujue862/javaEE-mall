@@ -33,59 +33,56 @@
     <div class="details-main">
       <!-- 左侧商品轮播图 -->
       <div class="details-block">
-        <el-carousel height="560px" v-if="productPictures.length > 1">
-          <el-carousel-item v-for="item in productPictures" :key="item.id">
-            <img style="height: 560px;" v-lazy="item.img_path" />
-          </el-carousel-item>
-        </el-carousel>
-        <div v-if="productPictures.length == 1">
-          <img style="height: 560px;" :src="productPictures[0].img_path" />
-        </div>
+<!--        <el-carousel height="560px" v-if="productPictures.length > 1">-->
+<!--          <el-carousel-item v-for="item in productPictures" :key="item.id">-->
+<!--            <img style="height: 560px;" v-lazy="item.img_path" />-->
+<!--          </el-carousel-item>-->
+<!--        </el-carousel>-->
+<!--        <div v-if="productPictures.length == 1">-->
+<!--          <img style="height: 560px;" :src="productPictures[0].img_path" />-->
+<!--        </div>-->
+        <img :src="productPictures" style='width: 80%; height: 80%' alt='商品图片缺失'>
       </div>
       <!-- 左侧商品轮播图END -->
 
       <!-- 右侧内容区 -->
       <div class="details-content">
-        <h1 class="name">{{ productDetails.name }}</h1>
+        <h1 class="name">{{ productdata.name }}</h1>
         <li class="view">
           <i class="el-icon-view"></i>
-          {{ productDetails.view }}
+          {{ productdata.description }}
         </li>
         <p class="intro">{{ productDetails.info }}</p>
-        <p class="store">小米自营</p>
         <div class="price">
-          <span>{{ productDetails.discount_price }}元</span>
+          <span>{{ productdata.price }}元</span>
           <span
-            v-show="productDetails.price != productDetails.discount_price"
+            v-show="productDetails.price != productdata.originalPrice"
             class="del"
-          >{{ productDetails.price }}元</span>
+          >{{ productdata.originalPrice }}元</span>
         </div>
         <div class="pro-list">
-          <span class="pro-name">{{ productDetails.name }}</span>
+          <span class="pro-name">{{ productdata.name }}</span>
           <span class="pro-price">
-            <span>{{ productDetails.discount_price }}元</span>
+            <span>{{ productdata.price }}元</span>
             <span
-              v-show="productDetails.price != productDetails.discount_price"
+              v-show="productDetails.price != productdata.originalPrice"
               class="pro-del"
-            >{{ productDetails.price }}元</span>
+            >{{ productdata.originalPrice }}元</span>
           </span>
-          <p class="price-sum">总计 : {{ productDetails.discount_price }}元</p>
+          <p class="price-sum">总计 : {{ productdata.price }}元</p>
         </div>
         <!-- 内容区底部按钮 -->
         <div class="button">
           <el-button class="shop-cart" :disabled="dis" @click="addShoppingCart">加入购物车</el-button>
           <el-button class="like" @click="addFavorite">喜欢</el-button>
         </div>
+        <el-input-number v-model="num" @change="handleChange" :min="1"  label="购买数" style='margin-bottom: 5%'></el-input-number>
         <!-- 内容区底部按钮END -->
         <div class="pro-policy">
           <ul>
             <li>
               <i class="el-icon-circle-check"></i>
-              小米自营
-            </li>
-            <li>
-              <i class="el-icon-circle-check"></i>
-              小米发货
+              顺丰发货
             </li>
             <li>
               <i class="el-icon-circle-check"></i>
@@ -105,17 +102,20 @@
       <el-button
         type="text"
         :class="select == 0 ? 'isSelect' : 'notSelect'"
-        @click="showInfoImgs"
+        @click="showInfo"
       >商品概述</el-button>
+
       <span class="cut">|</span>
+
       <el-button
         type="text"
         :class="select == 1 ? 'isSelect' : 'notSelect'"
-        @click="showParamImgs"
+        @click="showParam"
       >商品参数</el-button>
+
     </div>
-    <div class="product-img" v-for="item in imgs" :key="item.id">
-      <img v-lazy="item.img_path" />
+    <div class="infor">
+      <i style='margin-bottom: 5%;margin-top: 5%'>{{this.infor}}</i>
     </div>
   </div>
 <!--  <div class="not-found" v-else>查询不到该商品</div>-->
@@ -126,17 +126,20 @@ import * as productsAPI from '@/api/products/'
 import * as imgsAPI from '@/api/img/'
 import * as favoritesAPI from '@/api/favorites/'
 import * as cartsAPI from '@/api/carts/'
+import axios from 'axios'
 export default {
   data() {
     return {
       dis: false, // 控制“加入购物车按钮是否可用”
       productID: 0, // 商品id
+      productdata: '',
       productDetails: '', // 商品详细信息
       productPictures: '', // 商品图片
-      imgs: '', //商品概述图片
-      infoImgs: '',
-      paramImgs: '',
-      select: 0
+      infor: '', //商品描述
+      info: '',
+      param: '',
+      select: 0,
+      num: 1,
     }
   },
   // 通过路由获取商品id
@@ -156,104 +159,113 @@ export default {
     ...mapActions(['unshiftShoppingCart', 'addShoppingCartNum']),
     // 获取商品详细信息
     load() {
-      productsAPI.showProduct(this.productID).then(res => {
-        this.productDetails = res.data
-      })
-      productsAPI.showPictures(this.productID).then(res => {
-        this.productPictures = res.data
-      })
-      imgsAPI.showInfoImgs(this.productID).then(res => {
-        this.infoImgs = res.data
-        this.imgs = this.infoImgs
-      })
-      imgsAPI.showParamImgs(this.productID).then(res => {
-        this.paramImgs = res.data
+      axios.get('/api/goods/findById', {
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+        params:{
+          id: this.productID
+        }
+      }).then(res => {
+        this.productdata=res.data.data
+        this.productPictures=this.productdata.picture
+        this.productdata.price=parseFloat(this.productdata.price).toFixed(2)
+        this.productdata.originalPrice=parseFloat(this.productdata.originalPrice).toFixed(2)
+        console.log(this.productPictures)
       })
     },
     goInfo() {
-      this.showInfoImgs()
+      this.showInfo()
       document.getElementById('product-select').scrollIntoView()
     },
     goParam() {
-      this.showParamImgs()
+      this.showParam()
       document.getElementById('product-select').scrollIntoView()
     },
-    showInfoImgs() {
+    showInfo() {
       this.select = 0
-      this.imgs = this.infoImgs
+      this.infor = this.productdata.description
     },
-    showParamImgs() {
+    showParam() {
       this.select = 1
-      this.imgs = this.paramImgs
+      this.infor = this.param
     },
     // 加入购物车
     addShoppingCart() {
       // 判断是否登录,没有登录则显示登录组件
-      if (!this.$store.getters.getUser) {
-        this.$router.push({ name: 'Login' })
-        return
-      }
+      // if (!this.$store.getters.getUser) {
+      //   this.$router.push({ name: 'Login' })
+      //   return
+      // }
+      axios.post('/api/shopping/addToCart', {amount : this.num, goodsId : this.productID,},{
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        this.notifySucceed('添加购物车成功')
+        console.log(this.num)
+      })
+      // var form = {
+      //   user_id: this.$store.getters.getUser.id,
+      //   product_id: Number(this.productID)
+      // }
+      // cartsAPI
+      //   .postCart(form)
+      //   .then(res => {
+      //     switch (res.status) {
+      //       case 200:
+      //         //新加入购物车成功
+      //         this.unshiftShoppingCart(res.data)
+      //         this.notifySucceed('添加购物车成功')
+      //         break
+      //       case 201:
+      //         // 该商品已经在购物车，数量+1
+      //         this.addShoppingCartNum(this.productID)
+      //         this.notifySucceed('该商品已在购物车，数量+1')
+      //         break
+      //       case 202:
+      //         // 商品数量达到限购数量
+      //         this.dis = true
+      //         this.notifyError('商品达到限购数量', res.msg)
+      //         break
+      //       case 20001:
+      //         //token过期，需要重新登录
+      //         this.loginExpired(res.msg)
+      //         break
+      //       default:
+      //         this.notifyError('添加购物车失败', res.msg)
+      //     }
+      //   })
+      //   .catch(err => {
+      //     this.notifyError('添加购物车失败', err)
+      //   })
+    },
+    addFavorite() {
+      // 判断是否登录,没有登录则显示登录组件
+      // if (!this.$store.getters.getUser) {
+      //   this.$router.push({ name: 'Login' })
+      //   return
+      // }
       var form = {
         user_id: this.$store.getters.getUser.id,
         product_id: Number(this.productID)
       }
-      cartsAPI
-        .postCart(form)
+      favoritesAPI
+        .postFavorite(form)
         .then(res => {
-          switch (res.status) {
-            case 200:
-              //新加入购物车成功
-              this.unshiftShoppingCart(res.data)
-              this.notifySucceed('添加购物车成功')
-              break
-            case 201:
-              // 该商品已经在购物车，数量+1
-              this.addShoppingCartNum(this.productID)
-              this.notifySucceed('该商品已在购物车，数量+1')
-              break
-            case 202:
-              // 商品数量达到限购数量
-              this.dis = true
-              this.notifyError('商品达到限购数量', res.msg)
-              break
-            case 20001:
-              //token过期，需要重新登录
-              this.loginExpired(res.msg)
-              break
-            default:
-              this.notifyError('添加购物车失败', res.msg)
+          if (res.status === 200) {
+            this.notifySucceed('添加收藏夹成功')
+          } else if (res.status === 20001) {
+            //token过期，需要重新登录
+            this.loginExpired(res.msg)
+          } else {
+            this.notifyError('添加收藏夹失败', res.msg)
           }
         })
         .catch(err => {
-          this.notifyError('添加购物车失败', err)
+          this.notifyError('添加收藏夹失败', err)
         })
-    },
-    // addFavorite() {
-    //   // 判断是否登录,没有登录则显示登录组件
-    //   if (!this.$store.getters.getUser) {
-    //     this.$router.push({ name: 'Login' })
-    //     return
-    //   }
-    //   var form = {
-    //     user_id: this.$store.getters.getUser.id,
-    //     product_id: Number(this.productID)
-    //   }
-    //   favoritesAPI
-    //     .postFavorite(form)
-    //     .then(res => {
-    //       if (res.status === 200) {
-    //         this.notifySucceed('添加收藏夹成功')
-    //       } else if (res.status === 20001) {
-    //         //token过期，需要重新登录
-    //         this.loginExpired(res.msg)
-    //       } else {
-    //         this.notifyError('添加收藏夹失败', res.msg)
-    //       }
-    //     })
-    //     .catch(err => {
-    //       this.notifyError('添加收藏夹失败', err)
-    //     })
-    // }
+    }
   },
   beforeRouteEnter(to, from, next) {
     // 添加背景色
@@ -473,4 +485,9 @@ export default {
   text-align: center;
 }
 /*v-else END*/
+.infor{
+  border:3px solid;
+  text-align: center;
+  font-size: large;
+}
 </style>
