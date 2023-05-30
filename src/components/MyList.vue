@@ -18,12 +18,12 @@
           <i class="el-icon-close delete" slot="reference" v-show="isDelete"></i>
         </el-popover>
         <router-link :to="{ path: '/goods/details', query: {productID:item.id} }">
-          <img :src="item.img_path" alt />
+          <img :src="item.picture" alt />
           <h2>{{item.name}}</h2>
-          <h3>{{item.title}}</h3>
+          <h3>{{item.description}}</h3>
           <p>
-            <span>{{item.discount_price}}元</span>
-            <span v-show="item.price != item.discount_price" class="del">{{item.price}}元</span>
+            <span>{{parseFloat(item.price).toFixed(2)}}元</span>
+            <span v-show="item.price != item.discount_price" class="del">{{parseFloat(item.originalPrice).toFixed(2)}}元</span>
           </p>
         </router-link>
       </li>
