@@ -23,7 +23,7 @@
           <div class="cart-header-select">
             <el-dropdown>
               <router-link to class="href">
-                <span style="margin-right:5px">{{this.$store.getters.getUser.name}}</span>
+                <span style="margin-right:5px">{{this.$store.getters.getUsername}}</span>
                 <i class="el-icon-caret-bottom"></i>
               </router-link>
               <el-dropdown-menu slot="dropdown">
@@ -66,9 +66,9 @@
                 :key="item.id"
                 @click="selectAddress(item)"
               >
-                <h2>{{item.name}}</h2>
-                <p class="phone">{{item.phone}}</p>
-                <p class="address">{{item.address}}</p>
+                <h2>{{item.info.toString().slice(0, item.info.toString().indexOf("@"))}}</h2>
+                <p class="phone">{{item.info.toString().slice(item.info.toString().indexOf("@") + 1, item.info.toString().lastIndexOf("@"))}}</p>
+                <p class="address">{{item.info.toString().slice(item.info.toString().lastIndexOf("@") + 1)}}</p>
               </li>
             </router-link>
             <li class="add-address" @click="addVisible=true">
@@ -156,7 +156,7 @@
     <el-dialog title="账户充值" :visible.sync="addVisible1" width="30%">
       <el-form ref="form" :model="user_account" label-width="70px">
         <el-form-item label="账号">
-          <span style="margin-right:5px">{{this.$store.getters.getUser.name}}</span>
+          <span style="margin-right:5px">{{this.$store.getters.getUsername}}</span>
         </el-form-item>
         <el-form-item label="充值金额">
           <el-input v-model="user_account.account"></el-input>
@@ -185,22 +185,10 @@ export default {
       confirmAddress: -1,
       // 地址列表
       address: [],
-      addresslist:[{
-        id:0,
-        name:'11',
-        phone:1,
-        address:'address1'
-      },
-        {
-          id:1,
-          name:'11',
-          phone:1,
-          address:'address2'
-        }],
+      addresslist:'',
       addVisible: false,
       addVisible1: false,
       form: {
-        user_id: '',
         name: '',
         phone: '',
         address: ''
@@ -243,6 +231,8 @@ export default {
       this.confirmAddress = item.id
     },
     getAddress() {
+      this.addresslist=this.$store.getters.getAddress
+      console.log(this.addresslist)
       this.address=this.addresslist;
       /*
       addressesAPI
@@ -291,8 +281,9 @@ export default {
         return
       }
       else {
-        if (this.card.price <= this.card.user_account) {////money够就跳转
+        if (this.cart.price <= this.cart.user_account) {////money够就跳转
           this.$router.push({ path: '/order' })
+          this.notifySucceed('支付成功')
           /*
           let orders = this.getCheckGoods
           for (let i = 0; i < orders.length; i++) {

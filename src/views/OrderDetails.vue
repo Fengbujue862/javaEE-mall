@@ -47,7 +47,7 @@
             <div class="order-address">
               <div class="order-address-head">
                 <p>姓名：</p>
-                <p>联系电话：</p>
+                <p>联系方式：</p>
                 <p>收货地址：</p>
               </div>
               <div class="order-address-data">
@@ -93,6 +93,7 @@ export default {
       order: '',
       name:'',
       phone:'',
+      form:'',
       orderslist:{
         id:'',
         createTime:'',
@@ -103,10 +104,13 @@ export default {
     }
   },
   beforeMount() {
+    this.form=this.$store.getters.getAddress
+    this.name=this.form[0].info.toString().slice(0, this.form[0].info.toString().indexOf("@"))
+    this.phone=this.form[0].info.toString().slice(this.form[0].info.toString().indexOf("@") + 1, this.form[0].info.toString().lastIndexOf("@"))
     this.orderslist.id=this.$store.getters.getOrderid
     this.orderslist.createTime=this.$store.getters.getCreatetime
     this.orderslist.price=this.$store.getters.getPrice
-    this.orderslist.address=this.$store.getters.getAddress
+    this.orderslist.address=this.form[0].info.toString().slice(this.form[0].info.toString().lastIndexOf("@") + 1)
     this.orderslist.goodsInfo=this.$store.getters.getGoodsinfo
     //console.log(this.orderslist)
     this.load()

@@ -25,7 +25,8 @@
               <!--订单列表-->
               <div class="order-list" v-for="(item,index) in orders" :key="index">
                 <div class="order-list-head">
-                  <span class="order-pay">已付款</span>
+                  <span class="order-pay" v-if="item.state=='PAID'">已付款</span>
+                  <span class="order-pay" v-else>等待付款</span>
                   <span class="operate">
                       <router-link
                         :to="{ path: '/order/details'}"
@@ -125,7 +126,7 @@ export default {
         "id": "123",
         "modifyTime": "2023-05-29T13:19:08.422Z",
         "price": "100",
-        "state": "string",
+        "state": "PAID",
         "userId": "string"
       },
         {
@@ -173,7 +174,7 @@ export default {
           "id": "124",
           "modifyTime": "2023-05-29T13:19:08.422Z",
           "price": "100",
-          "state": "string",
+          "state": "UNPAID",
           "userId": "string"
         }],// 订单列表
     }
