@@ -60,7 +60,7 @@
         <!-- 购物车表头  v-if="getShoppingCart.length>0"-->
         <li class="content-header">
           <div class="pro-check">
-            <el-checkbox v-model="isAllCheck">全选</el-checkbox>
+            <el-checkbox :indeterminate="isIndeterminate" v-model='checkAll' @change="handleCheckAllChange">全选</el-checkbox>
           </div>
           <div class="pro-img"></div>
           <div class="pro-name">商品名称</div>
@@ -74,29 +74,32 @@
         <!-- 购物车列表 -->
         <li class="product-list" v-for="(item,index) in getShoppingCart" :key="item.id">
           <div class="pro-check">
-            <el-checkbox :value="item.check" @change="checkChange($event,index)"></el-checkbox>
+            <el-checkbox v-model='choose[index]' @change='checkChange(index,item.goods.price*item.amount)'></el-checkbox>
           </div>
+
           <div class="pro-img">
-            <router-link :to="{ path: '/goods/details', query: {productID:item.product_id} }">
-              <img :src="item.img_path" />
+            <router-link :to="{ path: '/goods/details', query: {productID:item.goods.id} }">
+              <img :src="item.goods.picture" alt='商品图片缺失'/>
             </router-link>
           </div>
+
           <div class="pro-name">
             <router-link
               :to="{ path: '/goods/details', query: {productID:item.product_id} }"
-            >{{item.name}}</router-link>
+            >{{item.goods.name}}</router-link>
           </div>
-          <div class="pro-price">{{item.discount_price}}元</div>
+
+          <div class="pro-price">{{parseFloat(item.goods.price).toFixed(2)}}元</div>
           <div class="pro-num">
             <el-input-number
               size="small"
-              :value="item.num"
-              @change="handleChange($event,index,item.product_id)"
+              v-model="item.amount"
+              @change="handleChange($event,item.id)"
               :min="1"
-              :max="item.max_num"
+              :max="item.goods.amount"
             ></el-input-number>
           </div>
-          <div class="pro-total pro-total-in">{{item.discount_price*item.num}}元</div>
+          <div class="pro-total pro-total-in">{{item.goods.price*item.amount}}元</div>
           <div class="pro-action">
             <el-popover placement="right">
               <p>确定删除吗？</p>
@@ -104,7 +107,7 @@
                 <el-button
                   type="primary"
                   size="mini"
-                  @click="deleteItem($event,item.id,item.product_id)"
+                  @click="deleteItem(item.id)"
                 >确定</el-button>
               </div>
               <i class="el-icon-error" slot="reference" style="font-size: 18px"></i>
@@ -123,17 +126,17 @@
           <span class="sep">|</span>
           <span class="cart-total">
             共
-            <span class="cart-total-num">{{getNum}}</span> 件商品，已选择
-            <span class="cart-total-num">{{getCheckNum}}</span> 件
+            <span class="cart-total-num">{{this.goodsnum}}</span> 件商品，已选择
+            <span class="cart-total-num">{{this.checkednum}}</span> 件
           </span>
         </div>
         <div class="cart-bar-right">
           <span>
             <span class="total-price-title">合计：</span>
-            <span class="total-price">{{getTotalPrice}}元</span>
+            <span class="total-price">{{this.totalprice}}元</span>
           </span>
-          <router-link :to="getCheckNum > 0 ? '/confirmOrder' : ''">
-            <div :class="getCheckNum > 0 ? 'btn-primary' : 'btn-primary-disabled'">去结算</div>
+          <router-link :to="this.totalprice > 0 ? '/confirmOrder' : ''">
+            <div :class="this.totalprice > 0 ? 'btn-primary' : 'btn-primary-disabled'">去结算</div>
           </router-link>
         </div>
       </div>
@@ -155,88 +158,198 @@
 import { mapActions } from 'vuex'
 import { mapGetters } from 'vuex'
 import * as cartsAPI from '@/api/carts'
+import axios from 'axios'
+import router from '@/router'
+import el from 'element-ui/src/locale/lang/el'
 
 export default {
   data() {
-    return {}
+    return {
+      getShoppingCart: [],
+      number: [],
+      goodsnum: 0,
+      checkAll: false,
+      checkedgoods: [],
+      choose: [],
+      isIndeterminate: true,
+      checkednum: 0,
+      totalprice:0,
+      maxprice:0,
+    }
+  },
+  activated() {
+    this.load()
   },
   methods: {
-    ...mapActions(['updateShoppingCart', 'deleteShoppingCart', 'checkAll']),
+    load(){
+      axios.get('/api/shopping/listCart', {
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+        params:{
+          page: 1,
+          limit :15,
+        }
+      }).then(res => {
+        this.getShoppingCart=res.data.data.list
+        this.goodsnum=res.data.data.total
+        console.log(this.getShoppingCart)
+        var len = this.goodsnum,i
+        for (i = 0; i < len; i++) {
+          this.choose[i]=false
+          this.maxprice+=this.getShoppingCart[i].goods.price*this.getShoppingCart[i].amount
+        }
+      })
+    },
+    handleChange(currentValue,  productID){
+      axios.post('/api/shopping/modifyAmount', {
+        "recordId": productID,
+        "value": currentValue
+      },{
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        this.notifySucceed('修改购物车成功')
+        console.log(this.choose)
+        console.log(this.maxprice)
+      })
+    },
+    deleteItem(id){
+      axios.post('/api/shopping/removeFromCart', {
+        "recordIds": [id],
+      },{
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        this.notifySucceed('删除商品')
+        this.$router.go(0)
+      })
+    },
+    checkChange(key,price) {
+      //this.choose[key]=!this.choose[key];
+      if(this.choose[key]===false){
+        this.checkednum--;
+        this.totalprice=this.totalprice-price
+      }
+      else{
+        this.checkednum++;
+        this.totalprice=this.totalprice+price
+      }
+
+    },
+    handleCheckAllChange(){
+      var all=0,i
+      var len = this.goodsnum
+      if(this.checkAll===false){
+        for (i = 0; i < len; i++) {
+          this.choose[i]=false
+        }
+        this.checkednum=0;
+        this.totalprice=0;
+      }
+      else {
+        for (i = 0; i < len; i++) {
+          this.choose[i]=true
+        }
+        this.checkednum=this.goodsnum
+        this.totalprice=this.maxprice
+      }
+      this.isIndeterminate = false;
+      // for (i = 0; i < len; i++) {
+      //   if(this.choose[i]===false){
+      //     all=1;
+      //     break;
+      //   }
+      // }
+      // if(all===1){
+      //   for (i = 0; i < len; i++) {
+      //     this.choose[i]=true
+      //   }
+      // }
+      // else{
+      //   for (i = 0; i < len; i++) {
+      //     this.choose[i]=false
+      //   }
+      // }
+    },
+    //...mapActions(['updateShoppingCart', 'deleteShoppingCart', 'checkAll']),
     // 修改商品数量的时候调用该函数
-    handleChange(currentValue, key, productID) {
-      // 当修改数量时，默认勾选
-      this.updateShoppingCart({ key: key, prop: 'check', val: true })
-      // 向后端发起更新购物车的数据库信息请求
-      var form = {
-        user_id: this.$store.getters.getUser.id,
-        product_id: productID,
-        num: currentValue
-      }
-      cartsAPI
-        .updateCart(form)
-        .then(res => {
-          if (res.status === 200) {
-            // 更新vuex状态
-            this.updateShoppingCart({
-              key: key,
-              prop: 'num',
-              val: currentValue
-            })
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
-          } else {
-            this.notifyError('更新失败', res.msg)
-          }
-        })
-        .catch(err => {
-          this.notifyError('更新失败', err)
-        })
-    },
-    checkChange(val, key) {
-      // 更新vuex中购物车商品是否勾选的状态
-      this.updateShoppingCart({ key: key, prop: 'check', val: val })
-    },
+    // handleChange(currentValue, key, productID) {
+    //   // 当修改数量时，默认勾选
+    //   this.updateShoppingCart({ key: key, prop: 'check', val: true })
+    //   // 向后端发起更新购物车的数据库信息请求
+    //   var form = {
+    //     user_id: this.$store.getters.getUser.id,
+    //     product_id: productID,
+    //     num: currentValue
+    //   }
+    //   cartsAPI
+    //     .updateCart(form)
+    //     .then(res => {
+    //       if (res.status === 200) {
+    //         // 更新vuex状态
+    //         this.updateShoppingCart({
+    //           key: key,
+    //           prop: 'num',
+    //           val: currentValue
+    //         })
+    //       } else if (res.status === 20001) {
+    //         //token过期，需要重新登录
+    //         this.loginExpired(res.msg)
+    //       } else {
+    //         this.notifyError('更新失败', res.msg)
+    //       }
+    //     })
+    //     .catch(err => {
+    //       this.notifyError('更新失败', err)
+    //     })
+    // },
+    // checkChange(val, key) {
+    //   // 更新vuex中购物车商品是否勾选的状态
+    //   this.updateShoppingCart({ key: key, prop: 'check', val: val })
+    // },
     // 向后端发起删除购物车的数据库信息请求
-    deleteItem(e, id, productID) {
-      var form = {
-        user_id: this.$store.getters.getUser.id,
-        product_id: productID
-      }
-      cartsAPI
-        .deleteCart(form)
-        .then(res => {
-          if (res.status === 200) {
-            // 更新vuex状态
-            this.deleteShoppingCart(productID)
-            this.notifySucceed('删除成功')
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
-          } else {
-            this.notifyError('删除失败', res.msg)
-          }
-        })
-        .catch(err => {
-          this.notifyError('删除失败', err)
-        })
-    }
+    // deleteItem(e, id, productID) {
+    //   var form = {
+    //     user_id: this.$store.getters.getUser.id,
+    //     product_id: productID
+    //   }
+    //   cartsAPI
+    //     .deleteCart(form)
+    //     .then(res => {
+    //       if (res.status === 200) {
+    //         // 更新vuex状态
+    //         this.deleteShoppingCart(productID)
+    //         this.notifySucceed('删除成功')
+    //       } else if (res.status === 20001) {
+    //         //token过期，需要重新登录
+    //         this.loginExpired(res.msg)
+    //       } else {
+    //         this.notifyError('删除失败', res.msg)
+    //       }
+    //     })
+    //     .catch(err => {
+    //       this.notifyError('删除失败', err)
+    //     })
+    // }
   },
   computed: {
-    ...mapGetters([
-      'getShoppingCart',
-      'getCheckNum',
-      'getTotalPrice',
-      'getNum'
-    ]),
-    isAllCheck: {
-      get() {
-        return this.$store.getters.getIsAllCheck
-      },
-      set(val) {
-        this.checkAll(val)
-      }
-    }
+    // ...mapGetters([
+    //   'getShoppingCart',
+    //   'getCheckNum',
+    //   'getTotalPrice',
+    //   'getNum'
+    // ]),
+    // isAllCheck: {
+    //   get() {
+    //     return this.$store.getters.getIsAllCheck
+    //   },
+    //   set(val) {
+    //     this.checkAll(val)
+    //   }
+    // }
   }
 }
 </script>

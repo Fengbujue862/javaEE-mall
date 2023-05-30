@@ -21,7 +21,6 @@
   margin: 0 auto;
   max-width: 1225px;
 }
-
 .el-carousel__item:nth-child(2n) {
   background-color: #99a9bf;
 }
@@ -60,13 +59,16 @@
 }
 
 .box-bd {
-  height: 615px;
+  height: 405px;
 }
 
 .box-bd .promo-list {
   float: left;
-  height: 615px;
+  height: 405px;
   width: 234px;
+  white-space: nowrap;
+  margin: 0 auto;
+  margin-left: 5%;
 }
 
 .box-bd .promo-list li {

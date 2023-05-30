@@ -12,8 +12,10 @@
     <div class="block">
       <el-carousel height="460px">
         <el-carousel-item v-for="item in carousels" :key="item.id">
-          <router-link :to="{ path: '/goods/details', query: {productID:item.product_id} }">
-            <img style="height:460px;" v-lazy="item.img_path" />
+          <router-link :to="{ path: '/goods/details', query: {productID:item.id} }">
+            <div style='text-align: center'>
+              <img style="height:460px; display: inline-block" v-lazy="item.picture" alt="图片" onerror="this.src='默认图片的url地址'" />
+            </div>
           </router-link>
         </el-carousel-item>
       </el-carousel>
@@ -21,100 +23,59 @@
     <!-- 轮播图END -->
     <div class="main-box">
       <div class="main">
-        <!-- 手机商品展示区域 -->
+        <!-- 数码商品展示区域 -->
         <div class="phone">
           <div class="box-hd">
-            <div class="title">手机</div>
+            <div class="title">数码</div>
           </div>
           <div class="box-bd">
-            <div class="promo-list">
-              <router-link :to="{ path: '/goods/details', query: {productID:14} }">
-                <img :src="'http://47.115.85.237:3000/public/imgs/phone/phone.png'" />
+            <div class="promo-list" v-for="item in phonesList" :key="item.id">
+              <router-link :to="{ path: '/goods/details', query: {productID:item.id} }">
+                <img :src="item.picture" alt='商品图片缺失' />
               </router-link>
-            </div>
-            <div class="list">
-              <MyList :list="phonesList" :isMore="true"></MyList>
+<!--              <router-link :to="{ path: '/goods/details', query: {productID:30} }">-->
+<!--                <img :src="'https://i.postimg.cc/VLrrv3SW/ebb0797a31f1a076.jpg'" alt='test' />-->
+<!--              </router-link>-->
             </div>
           </div>
         </div>
-        <!-- 手机商品展示区域END -->
+        <!-- 数码商品展示区域END -->
 
-        <!-- 家电商品展示区域 -->
+        <!-- 食品商品展示区域 -->
         <div class="appliance" id="promo-menu">
           <div class="box-hd">
-            <div class="title">家电</div>
-            <div class="more" id="more">
-              <MyMenu :val="2" @fromChild="getChildMsg">
-                <span slot="1">热门</span>
-                <span slot="2">电视影音</span>
-              </MyMenu>
-            </div>
+            <div class="title">食品</div>
           </div>
           <div class="box-bd">
-            <div class="promo-list">
-              <ul>
-                <router-link :to="{ path: '/goods/details', query: {productID:21} }">
-                  <li>
-                    <img
-                      :src="'http://47.115.85.237:3000/public/imgs/appliance/appliance-promo1.png'"
-                    />
-                  </li>
-                </router-link>
-                <router-link :to="{ path: '/goods/details', query: {productID:22} }">
-                  <li>
-                    <img
-                      :src="'http://47.115.85.237:3000/public/imgs/appliance/appliance-promo2.png'"
-                    />
-                  </li>
-                </router-link>
-              </ul>
-            </div>
-            <div class="list">
-              <MyList :list="applianceList" :isMore="true"></MyList>
+            <div class="promo-list" v-for="item in foodList" :key="item.id">
+              <router-link :to="{ path: '/goods/details', query: {productID:item.id} }">
+                <img :src="item.picture" alt='商品图片缺失' />
+              </router-link>
+<!--              <router-link :to="{ path: '/goods/details', query: {productID:14} }">-->
+<!--                <img :src="'https://i.postimg.cc/8cVKcqDK/dc7607ad9bb3c012.jpg'" alt='test'/>-->
+<!--              </router-link>-->
             </div>
           </div>
         </div>
-        <!-- 家电商品展示区域END -->
+        <!-- 食品商品展示区域END -->
 
-        <!-- 配件商品展示区域 -->
+        <!-- 服装商品展示区域 -->
         <div class="accessory" id="promo-menu">
           <div class="box-hd">
-            <div class="title">配件</div>
-            <div class="more" id="more">
-              <MyMenu :val="3" @fromChild="getChildMsg2">
-                <span slot="1">热门</span>
-                <span slot="2">保护套</span>
-                <span slot="3">充电器</span>
-              </MyMenu>
-            </div>
+            <div class="title">服装</div>
           </div>
           <div class="box-bd">
-            <div class="promo-list">
-              <ul>
-                <router-link :to="{ path: '/goods/details', query: {productID:30} }">
-                  <li>
-                    <img
-                      :src="'http://47.115.85.237:3000/public/imgs/accessory/accessory-promo1.png'"
-                      alt
-                    />
-                  </li>
-                </router-link>
-                <router-link :to="{ path: '/goods/details', query: {productID:32} }">
-                  <li>
-                    <img
-                      :src="'http://47.115.85.237:3000/public/imgs/accessory/accessory-promo2.png'"
-                      alt
-                    />
-                  </li>
-                </router-link>
-              </ul>
-            </div>
-            <div class="list">
-              <MyList :list="accessoryList" :isMore="true"></MyList>
+            <div class="promo-list" v-for="item in clothList" :key="item.id">
+              <router-link :to="{ path: '/goods/details', query: {productID:item.id} }">
+                <img :src="item.picture" alt='商品图片缺失' />
+              </router-link>
+<!--              <router-link :to="{ path: '/goods/details', query: {productID:30} }">-->
+<!--                <img :src="'https://i.postimg.cc/kGjQC8pM/7b0f3eac0cd939be.jpg'" alt />-->
+<!--              </router-link>-->
             </div>
           </div>
         </div>
-        <!-- 配件商品展示区域END -->
+        <!-- 服装商品展示区域END -->
       </div>
     </div>
   </div>
@@ -123,16 +84,19 @@
 import * as carouselsAPI from '@/api/carousels/'
 import * as productsAPI from '@/api/products/'
 import * as rankingAPI from '@/api/ranking/'
+import axios from 'axios'
 
 export default {
   data() {
     return {
-      carousels: '', // 轮播图数据
-      phonesList: '', // 手机商品列表
+      goodslist: [],//商品列表
+      carousels: [], // 轮播图数据
+      phonesList: '', // 数码商品列表
+      foodList: '', // 家电商品列表
+      clothList: '', //配件商品列表
+
       televisionsList: '', // 小米电视商品列表
-      applianceList: '', // 家电商品列表
       applianceHotList: '', //热门家电商品列表
-      accessoryList: '', //配件商品列表
       accessoryHotList: '', //热门配件商品列表
       phoneShellsList: '', // 保护套商品列表
       chargersList: '', //充电器商品列表
@@ -186,12 +150,63 @@ export default {
   },
   activated() {
     // 获取首页数据
-    console.log()
     this.load()
   },
   methods: {
     load() {
-      carouselsAPI
+      axios.get('/api/goods/list', {
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+        params:{
+          sortField: "VIEW_CNT_DESC",
+          page: 1,
+          limit: 4,
+          type: "数码",
+        }
+      }).then(res => {
+        this.phonesList=res.data.data.list
+      })
+      axios.get('/api/goods/list', {
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+        params:{
+          sortField: "VIEW_CNT_DESC",
+          page: 1,
+          limit: 4,
+          type: "服装",
+        }
+      }).then(res => {
+        this.clothList=res.data.data.list
+      })
+      axios.get('/api/goods/list', {
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+        params:{
+          sortField: "VIEW_CNT_DESC",
+          page: 1,
+          limit: 4,
+          type: "食品",
+        }
+      }).then(res => {
+        this.foodList=res.data.data.list
+      })
+      axios.get('/api/goods/list', {
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+        params:{
+          sortField: "VIEW_CNT_DESC",
+          page: 1,
+          limit: 5
+        }
+      }).then(res => {
+        this.carousels=res.data.data.list
+        console.log(this.carousels)
+      })
+      /*carouselsAPI
         .listCarousels()
         .then(res => {
           if (res.status == 200) {
@@ -202,9 +217,10 @@ export default {
         })
         .catch(err => {
           this.notifyError('获取轮播图失败', err)
-        })
+        })*/
+
       //获取热门家电
-      rankingAPI
+      /*rankingAPI
         .listElecRanking()
         .then(res => {
           if (res.status === 200) {
@@ -238,10 +254,10 @@ export default {
       //获取保护套列表
       this.getProduct(5, 'phoneShellsList')
       //获取充电器列表
-      this.getProduct(7, 'chargersList')
+      this.getProduct(7, 'chargersList')*/
     },
     // 获取家电模块子组件传过来的数据
-    getChildMsg(val) {
+    /*getChildMsg(val) {
       this.applianceActive = val
     },
     // 获取配件模块子组件传过来的数据
@@ -262,7 +278,7 @@ export default {
         .catch(err => {
           this.notifyError('获取失败', err)
         })
-    }
+    }*/
   },
   beforeRouteEnter(to, from, next) {
     // 添加背景色

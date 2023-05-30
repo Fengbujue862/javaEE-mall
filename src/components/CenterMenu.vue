@@ -44,20 +44,6 @@
               <li>
                 <router-link to="/about" class="menu-a">关于网站</router-link>
               </li>
-              <li>
-                <a
-                  href="https://github.com/congz666/cmall-vue"
-                  target="_blank"
-                  class="menu-a"
-                >项目地址(前端)</a>
-              </li>
-              <li>
-                <a
-                  href="https://github.com/congz666/cmall-go"
-                  target="_blank"
-                  class="menu-a"
-                >项目地址(后端)</a>
-              </li>
             </ul>
           </div>
 

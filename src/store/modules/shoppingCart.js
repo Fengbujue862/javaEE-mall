@@ -13,7 +13,7 @@ export default {
   getters: {
     getShoppingCart(state) {
       // 获取购物车状态
-      return state.shoppingCart
+      return this.shoppingCart
     },
     getNum(state) {
       // 购物车商品总数量
