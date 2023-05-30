@@ -4,7 +4,7 @@
  * @Date: 2020-07-03 18:01:05
  * @LastEditors: congz
  * @LastEditTime: 2020-08-19 10:55:03
---> 
+-->
 
 <template>
   <div class="order" id="order" name="order">
@@ -20,20 +20,32 @@
             <div class="order-title">
               <p>我的订单</p>
             </div>
+            <div class="order-select">
+              <router-link :to="{ path: '/order'}">
+                <span :class="type==0?'select':'no-select'">全部有效订单</span>
+              </router-link>
+              <span class="cut">|</span>
+              <router-link :to="{ path: '/order', query: {type:1} }">
+                <span :class="type==1?'select':'no-select'">待支付</span>
+              </router-link>
+              <span class="cut">|</span>
+              <router-link :to="{ path: '/order', query: {type:2} }">
+                <span :class="type==2?'select':'no-select'">已支付</span>
+              </router-link>
+              <div class="search">
+                <el-input placeholder="输入商品名称、订单号" v-model="search">
+                  <el-button slot="append" icon="el-icon-search" @click="searchClick"></el-button>
+                </el-input>
+              </div>
+            </div>
             <div v-if="orders.length>0">
               <!--我的订单头部 end-->
               <!--订单列表-->
               <div class="order-list" v-for="(item,index) in orders" :key="index">
                 <div class="order-list-head">
-                  <span class="order-pay" v-if="item.state=='PAID'">已付款</span>
-                  <span class="order-pay" v-else>等待付款</span>
-                  <span class="operate">
-                      <router-link
-                        :to="{ path: '/order/details'}"
-                      >
-                        <el-button plain class="button-detail" @click='getDetails(item.id)'>订单详情</el-button>
-                      </router-link>
-                  </span>
+                  <div class="order-pay" v-if="item.state=='UNPAID'">等待付款</div>
+                  <div class="order-pay" v-if="item.state=='PAID'">已付款</div>
+                  <div class="order-pay" v-else>已取消</div>
                   <div class="order-info">
                     <div style="width:650px;">
                       <span class="info">{{item.createTime}}</span>
@@ -44,7 +56,7 @@
                       <span class="cut">|</span>
                       <span class="info">在线支付</span>
                     </div>
-                    <span class="info" style="margin-left:30px">总计金额：</span>
+                    <span class="info" style="margin-left:30px">应付金额：</span>
                     <span class="money">{{item.price}}</span>
                     <span class="info">元</span>
                   </div>
@@ -58,22 +70,44 @@
                     </router-link>
                   </div>
                   <div class="pro-info">
-                    <span style="margin-bottom:7px">
+                    <p style="margin-bottom:7px">
                       <router-link
                         class="info-href"
                         :to="{ path: '/goods/details', query: {productID:item1.goods.id} }"
                       >{{item1.goods.name}}</router-link>
-                    </span>
+                    </p>
+                    <span>{{item1.goods.price}}</span>&nbsp;×
+                    <span>{{item1.amount}}</span>
                   </div>
-                  <div style='margin-left: 110px'>
-                    <span>
-                      {{item1.goods.price}} 元&nbsp;×
-                      {{item1.amount}}
-                    </span>
+                  <div class="operate">
+                    <div v-if="item.state=='UNPAID'">
+                      <router-link :to="{ path: '/confirmOrder', query: {orderNum:item.id} }">
+                        <el-button class="button-pay">立即付款</el-button>
+                      </router-link>
+                    </div>
+                    <div v-if="item.state=='PAID'">
+                      <router-link
+                        :to="{ path: '/order/details', query: {orderNum:item.id} }"
+                      >
+                        <el-button plain class="button-detail">订单详情</el-button>
+                      </router-link>
+                    </div>
+                    <div v-if="item.state=='UNPAID'">
+                      <el-button type="info" class="button-detail">取消订单</el-button>
+                    </div>
                   </div>
                 </div>
               </div>
               <!-- 分页 -->
+              <div class="pagination">
+                <el-pagination
+                  background
+                  @current-change="handleCurrentChange"
+                  :page-size="pageSize"
+                  layout="total, prev, pager, next, jumper"
+                  :total="total"
+                ></el-pagination>
+              </div>
               <div class="extra"></div>
               <div class="extra"></div>
             </div>
@@ -92,43 +126,49 @@
 </template>
 <script>
 import CenterMenu from '../components/CenterMenu'
-import { mapActions } from 'vuex'
-//import axios from 'axios'
+import axios from 'axios'
+import * as ordersAPI from '@/api/orders'
 export default {
   name: 'Order',
   data() {
     return {
-      orders:[],
+      orders: [], // 订单列表
+      pageSize: 5,
+      total: 0,
+      start: 0,
+      limit: 5,
+      type: '',
+      search:'',
       list: [
-      {
-        "address": "address1",
-        "createTime": "2023-05-29T13:19:08.422Z",
-        "goodsInfo": [
         {
-          "amount": "1",
-          "goods": {
-            "amount": "2",
-            "createTime": "2023-05-29T13:19:08.422Z",
-            "description": "string",
-            "discount": "string",
-            "id": "string",
-            "modifyTime": "2023-05-29T13:19:08.422Z",
-            "name": "good1",
-            "originalPrice": "string",
-            "picture": "string",
-            "price": "2",
-            "sales": "string",
-            "state": "string",
-            "type": "string",
-            "viewCnt": "string"
-          }
-        }],
-        "id": "123",
-        "modifyTime": "2023-05-29T13:19:08.422Z",
-        "price": "100",
-        "state": "PAID",
-        "userId": "string"
-      },
+          "address": "address1",
+          "createTime": "2023-05-29T13:19:08.422Z",
+          "goodsInfo": [
+            {
+              "amount": "1",
+              "goods": {
+                "amount": "2",
+                "createTime": "2023-05-29T13:19:08.422Z",
+                "description": "string",
+                "discount": "string",
+                "id": "string",
+                "modifyTime": "2023-05-29T13:19:08.422Z",
+                "name": "good1",
+                "originalPrice": "string",
+                "picture": "string",
+                "price": "2",
+                "sales": "string",
+                "state": "string",
+                "type": "string",
+                "viewCnt": "string"
+              }
+            }],
+          "id": "123",
+          "modifyTime": "2023-05-29T13:19:08.422Z",
+          "price": "100",
+          "state": "PAID",
+          "userId": "string"
+        },
         {
           "address": "address1",
           "createTime": "2023-05-29T13:19:08.422Z",
@@ -180,7 +220,11 @@ export default {
     }
   },
   activated() {
-   this.getOrders()
+    if (this.$route.query.type != undefined) {
+      this.type = this.$route.query.type
+    } else {
+      this.type = 0
+    }
   },
   watch: {
     // 监听订单类型的变化，请求后端获取商品数据
@@ -189,41 +233,125 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setOrderid', 'setCreatetime','setPrice','setAddress','setGoodsinfo']),
-    getDetails(id){
-      let i=0;
-      for(i=0;i<this.list.length;i++){
-        if(this.list[i].id===id){
-          this.setOrderid(this.list[i].id);
-          this.setCreatetime(this.list[i].createTime);
-          this.setPrice(this.list[i].price);
-          this.setAddress(this.list[i].address)
-          this.setGoodsinfo(this.list[i].goodsInfo);
-          break;
-        }
-      }
+    handleCurrentChange(val) {
+      this.start = this.limit * (val - 1) // val 页面
+      this.getOrders()
     },
     getOrders() {
       this.orders=this.list;
-      /*
-      axios.get('http://82.156.143.194:8090/shopping/listOrders', {
-        params: {
-          state:"PAID",
-          page:1,
-          limit:100,
-        },
-        headers: {
-          token: localStorage.getItem("token"),
-        },
-      }).then(res => {
+      if(this.type==3){
+        axios.get('http://82.156.143.194:8090/shopping/listOrders', {
+          params: {
+            keyword:this.search,
+            page:this.start,
+            limit:this.limit,
+          },
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        }).then(res => {
           if (res.status === 200) {
             this.orders = res.data.list
             this.total = res.data.total
-            if(this.orders.id !== '') this.setUsername(this.form.username)
           } else if (res.status === 401) {
             this.loginExpired(res.message)
           } else {
             this.notifyError('获取订单失败', res.message)
+          }
+        })
+          .catch(err => {
+            this.notifyError('获取订单失败', err)
+          })
+      }
+      else if(this.type==0){
+        axios.get('http://82.156.143.194:8090/shopping/listOrders', {
+          params: {
+            page:this.start,
+            limit:this.limit,
+          },
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        }).then(res => {
+          if (res.status === 200) {
+            this.orders = res.data.list
+            this.total = res.data.total
+          } else if (res.status === 401) {
+            this.loginExpired(res.message)
+          } else {
+            this.notifyError('获取订单失败', res.message)
+          }
+        })
+          .catch(err => {
+            this.notifyError('获取订单失败', err)
+          })
+      }
+      else if(this.type==1){
+        axios.get('http://82.156.143.194:8090/shopping/listOrders', {
+          params: {
+            states:"UNPAID",
+            page:this.start,
+            limit:this.limit,
+          },
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        }).then(res => {
+          if (res.status === 200) {
+            this.orders = res.data.list
+            this.total = res.data.total
+          } else if (res.status === 401) {
+            this.loginExpired(res.message)
+          } else {
+            this.notifyError('获取订单失败', res.message)
+          }
+        })
+          .catch(err => {
+            this.notifyError('获取订单失败', err)
+          })
+      }
+      else if(this.type==2){
+        axios.get('http://82.156.143.194:8090/shopping/listOrders', {
+          params: {
+            states:"PAID",
+            page:this.start,
+            limit:this.limit,
+          },
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        }).then(res => {
+          if (res.status === 200) {
+            this.orders = res.data.list
+            this.total = res.data.total
+          } else if (res.status === 401) {
+            this.loginExpired(res.message)
+          } else {
+            this.notifyError('获取订单失败', res.message)
+          }
+        })
+          .catch(err => {
+            this.notifyError('获取订单失败', err)
+          })
+      }
+      // 获取订单数据
+      /*
+      ordersAPI
+        .listOrders(
+          this.$store.getters.getUser.id,
+          this.type,
+          this.start,
+          this.limit
+        )
+        .then(res => {
+          if (res.status === 200) {
+            this.orders = res.data.items
+            this.total = res.data.total
+          } else if (res.status === 20001) {
+            //token过期，需要重新登录
+            this.loginExpired(res.msg)
+          } else {
+            this.notifyError('获取订单失败', res.msg)
           }
         })
         .catch(err => {
@@ -260,11 +388,31 @@ export default {
 .extra {
   height: 10px;
 }
+.order-select {
+  width: 920px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+}
+.order-select .no-select {
+  font-size: 17px;
+  color: #757575;
+  margin-right: 10px;
+}
+.order-select .select {
+  font-size: 17px;
+  color: #ff6700;
+  margin-right: 10px;
+}
 .order-select .cut {
   font-size: 22px;
   color: #c9c7c7;
   margin-right: 15px;
   font-weight: 300;
+}
+.order-select .search {
+  width: 300px;
+  margin-left: 225px;
 }
 /*订单头部*/
 .order-list-head {
@@ -281,6 +429,13 @@ export default {
 .order-list-head .order-pay {
   font-size: 19px;
   color: #ff6700;
+  margin-left: 30px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.order-list-head .order-success-pay {
+  font-size: 19px;
+  color: #00a724;
   margin-left: 30px;
   margin-top: 20px;
   margin-bottom: 10px;
@@ -342,15 +497,25 @@ export default {
 .order-list-product .pro-info .info-href:hover {
   color: #ff6700;
 }
-.operate {
-  margin-left: 630px;
+.order-list-product .operate {
   line-height: 50px;
+  margin-left: 150px;
+}
+.order-list-product .operate .button-pay {
+  width: 100px;
+  color: #ffffff;
+  background-color: #ff6700;
 }
 
-.operate .button-detail {
+.order-list-product .operate .button-detail {
   width: 100px;
 }
 /*订单商品END*/
+.order-content .pagination {
+  width: 300px;
+  margin: 0 auto;
+  margin-top: 20px;
+}
 .empty {
   width: 200px;
   margin: 0 auto;
