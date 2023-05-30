@@ -13,6 +13,8 @@ export default {
     username: '',
     email: '',
     avatar: '',
+    address: [],
+    availableIndex: 0,
   },
   getters: {
     getUser(state) {
@@ -30,6 +32,12 @@ export default {
     getAvatar(state) {
       return state.avatar
     },
+    getAddress(state) {
+      return state.address
+    },
+    getAvailableIndex(state) {
+      return state.availableIndex
+    }
   },
   mutations: {
     setUser(state, data) {
@@ -47,6 +55,35 @@ export default {
     setAvatar(state, data) {
       state.avatar = data
     },
+    setAddress(state, data) {
+      //state.address = data
+      for (let i = 0; i < data.length; i++) {
+        state.address.push({id:i, info: data[i]})
+      }
+    },
+    addAddress(state, data) {
+      // 添加购物车
+      // 用于在商品详情页点击添加购物车,后台添加成功后，更新vuex状态
+      state.address.push(data)
+      state.availableIndex += 1
+    },
+    deleteAddressMap(state, index) {
+      //state.address.splice(index, 1)
+      for (let i = 0; i < state.address.length; i++) {
+        const item = state.address.at(i)
+        if (item.id === index) {
+          state.address.splice(index, 1)
+          break
+        }
+      }
+
+    },
+    addAvailableIndex(state) {
+      state.availableIndex += 1
+    },
+    setAvailableIndex(state, data) {
+      state.availableIndex = data
+    }
   },
   actions: {
     setUser({ commit }, data) {
@@ -64,6 +101,20 @@ export default {
     setAvatar({ commit }, data) {
       commit('setAvatar', data)
     },
-
+    setAddress({ commit }, data) {
+      commit('setAddress', data)
+    },
+    addAddress({ commit }, data) {
+      commit('addAddress', data)
+    },
+    deleteAddressMap({ commit }, data) {
+      commit('deleteAddressMap', data)
+    },
+    addAvailableIndex({ commit }) {
+      commit('addAvailableIndex')
+    },
+    setAvailableIndex({ commit }, data) {
+      commit('setAvailableIndex', data)
+    },
   }
 }

@@ -172,11 +172,12 @@ export default {
     if(localStorage.getItem('user_id')){
       userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
         if (res.code == 200) {
-          console.log(res.data[0])
           this.setUserid(res.data[0].id)
           this.setUsername(res.data[0].username)
           this.setEmail(res.data[0].email)
           this.setAvatar(res.data[0].avatar)
+          this.setAddress(res.data[0].shippingAddress)
+          this.setAvailableIndex(res.data[0].shippingAddress.length)
           //this.setUser(res.data[0])
 
         } else {
@@ -214,21 +215,18 @@ export default {
       } else {
         // 用户已经登录,获取该用户的购物车信息
         cartsAPI
-          .showCarts(val.id)
+          .showCarts()
           .then(res => {
-            if (res.status === 200) {
+            if (res.code == 200) {
               if (res.data === null) {
                 this.setShoppingCart([])
               } else {
-                this.setShoppingCart(res.data)
+                this.setShoppingCart(res.data.list)
               }
-            } else if (res.status === 20001) {
-              //token过期，需要重新登录
-              this.loginExpired(res.msg)
             } else {
               this.$notify.error({
                 title: '购物车获取失败',
-                message: res.msg
+                message: res.message
               })
             }
           })
@@ -239,7 +237,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setUserid', 'setShoppingCart', 'setEmail', 'setAvatar', 'setUsername']),
+    ...mapActions(['setUserid', 'setShoppingCart', 'setEmail', 'setAvatar', 'setUsername', 'setAddress', 'setAvailableIndex']),
     login() {
       this.$router.push({
         name: 'Login'
@@ -247,18 +245,28 @@ export default {
     },
     // 退出登录
     logout() {
-      // 清空本地登录信息
-      localStorage.removeItem('user_id')
-      localStorage.removeItem('token')
-      // 清空vuex登录信息
-      this.setUserid('')
-      this.setAvatar('')
-      this.setEmail('')
-      this.setUsername('')
-      this.$router.push({
-        name: 'Home'
+      userAPI.postLogout().then(res => {
+        if (res.code == 200) {
+          // 清空本地登录信息
+          localStorage.removeItem('user_id')
+          localStorage.removeItem('token')
+          // 清空vuex登录信息
+          this.setUserid('')
+          this.setAvatar('')
+          this.setEmail('')
+          this.setUsername('')
+          this.setAddress([])
+          this.setAvailableIndex(0)
+          this.$router.push({
+            name: 'Home'
+          })
+          this.notifySucceed('登出成功')
+        } else {
+          this.notifyError(res.message)
+        }
       })
-      this.notifySucceed('登出成功')
+
+
     },
     //重定向
     register() {

@@ -29,18 +29,18 @@
                 </router-link>
                 <router-link to>
                   <li
-                    :class="item.id == confirmAddress ? 'in-section' : ''"
-                    v-for="(item,index) in address"
+                    :class="index === confirmAddress ? 'in-section' : ''"
+                    v-for="(item,index) in getAddress"
                     :key="item.id"
-                    @mouseenter="mouseEnter(item)"
-                    @mouseleave="mouseLeave(item)"
+                    @mouseenter="mouseEnter(index)"
+                    @mouseleave="mouseLeave()"
                   >
-                    <h2>{{item.name}}</h2>
-                    <p class="phone">{{item.phone}}</p>
-                    <p class="address">{{item.address}}</p>
-                    <div class="operate" v-show="item.seen">
-                      <span @click="edit(item)">修改</span>
-                      <span @click="deleteDialog(item.id,index)">删除</span>
+                    <h2>{{item.info.toString().slice(0, item.info.toString().indexOf("@"))}}</h2>
+                    <p class="phone">{{item.info.toString().slice(item.info.toString().indexOf("@") + 1, item.info.toString().lastIndexOf("@"))}}</p>
+                    <p class="address">{{item.info.toString().slice(item.info.toString().lastIndexOf("@") + 1)}}</p>
+                    <div class="operate" >
+<!--                      <span @click="edit(item)">修改</span>-->
+                      <span @click="deleteDialog(index)">删除</span>
                     </div>
                   </li>
                 </router-link>
@@ -48,15 +48,15 @@
             </div>
           </div>
           <!-- 新建收货地址弹出框 -->
-          <el-dialog title="新建收货地址" :visible.sync="addVisible" width="30%">
-            <el-form ref="form" :model="form" label-width="70px">
-              <el-form-item label="姓名">
+          <el-dialog title="新建收货地址" :visible.sync="addVisible"  width="30%">
+            <el-form ref="form" status-icon :model="form" label-width="70px" :rules="rules">
+              <el-form-item label="姓名" prop='name'>
                 <el-input v-model="form.name"></el-input>
               </el-form-item>
-              <el-form-item label="手机号">
+              <el-form-item label="手机号" prop='phone'>
                 <el-input v-model="form.phone"></el-input>
               </el-form-item>
-              <el-form-item label="详细地址">
+              <el-form-item label="详细地址" prop='address'>
                 <el-input type="textarea" rows="5" v-model="form.address"></el-input>
               </el-form-item>
             </el-form>
@@ -67,23 +67,23 @@
           </el-dialog>
           <!-- 新建收货地址弹出框END -->
           <!-- 修改收货地址弹出框 -->
-          <el-dialog title="修改收货地址" :visible.sync="editVisible" width="30%">
-            <el-form ref="form" :model="form" label-width="70px">
-              <el-form-item label="姓名">
-                <el-input v-model="form.name"></el-input>
-              </el-form-item>
-              <el-form-item label="手机号">
-                <el-input v-model="form.phone"></el-input>
-              </el-form-item>
-              <el-form-item label="详细地址">
-                <el-input type="textarea" rows="5" v-model="form.address"></el-input>
-              </el-form-item>
-            </el-form>
-            <span slot="footer" class="dialog-footer">
-              <el-button type="primary" @click="saveEdit">确 定</el-button>
-              <el-button @click="editVisible = false">取 消</el-button>
-            </span>
-          </el-dialog>
+<!--          <el-dialog title="修改收货地址" :visible.sync="editVisible" width="30%">-->
+<!--            <el-form ref="form" :model="form" label-width="70px">-->
+<!--              <el-form-item label="姓名">-->
+<!--                <el-input v-model="form.name"></el-input>-->
+<!--              </el-form-item>-->
+<!--              <el-form-item label="手机号">-->
+<!--                <el-input v-model="form.phone"></el-input>-->
+<!--              </el-form-item>-->
+<!--              <el-form-item label="详细地址">-->
+<!--                <el-input type="textarea" rows="5" v-model="form.address"></el-input>-->
+<!--              </el-form-item>-->
+<!--            </el-form>-->
+<!--            <span slot="footer" class="dialog-footer">-->
+<!--              <el-button type="primary" @click="saveEdit">确 定</el-button>-->
+<!--              <el-button @click="editVisible = false">取 消</el-button>-->
+<!--            </span>-->
+<!--          </el-dialog>-->
           <!-- 修改收货地址弹出框END -->
           <!-- 删除收货地址弹出框 -->
           <el-dialog title="提示" :visible.sync="deleteVisible" width="30%" center>
@@ -91,7 +91,7 @@
               <span>确认删除该地址吗？</span>
             </div>
             <span slot="footer" class="dialog-footer">
-              <el-button type="primary" @click="deleteAddress">确 定</el-button>
+              <el-button type="primary" @click="deleteAddressFunc">确 定</el-button>
               <el-button @click="deleteVisible = false">取 消</el-button>
             </span>
           </el-dialog>
@@ -104,76 +104,100 @@
 <script>
 import CenterMenu from '../components/CenterMenu'
 import * as addressesAPI from '@/api/addresses'
+import { mapActions, mapGetters } from 'vuex'
+import { deleteAddress } from '@/api/addresses'
 export default {
   name: 'Details',
   data() {
+    var validatePhone = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('电话号码不能为空！'))
+      } else {
+        let pattern = /^(?:\+?86)?1\d{10}$/
+        if(!pattern.test(value)) callback(new Error('请输入正确电话号码'))
+        else {
+          callback()
+        }
+      }
+    }
+    var validateAddress = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('地址不能为空！'))
+      } else if (value.indexOf('@') !== -1) {
+        callback(new Error('姓名不能包含非法字符'))
+      } else {
+          callback()
+      }
+    }
+    var validateName = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('姓名不能为空！'))
+      } else if (value.indexOf('@') !== -1) {
+        callback(new Error('姓名不能包含非法字符'))
+      } else {
+          callback()
+      }
+    }
     return {
-      address: [],
       addVisible: false,
-      editVisible: false,
       deleteVisible: false,
-      confirmAddress: 0, // 选择的地址id
-      addressID: 0,
-      addressIndex: 0,
+      availableIndex: -1,
+      deleteIndex: -1,
+      confirmAddress: -1, // 选择的地址id
       form: {
-        id: '',
-        user_id: '',
         name: '',
         phone: '',
         address: ''
-      }
+      },
+      rules: {
+        name: [{ validator: validateName, trigger: 'blur' }],
+        phone: [{ validator: validatePhone, trigger: 'blur' }],
+        address: [{ validator: validateAddress, trigger: 'blur' }],
+      },
     }
   },
   created() {
-    this.getAddress()
+    //this.getAddresses()
   },
   methods: {
-    getAddress() {
-      addressesAPI
-        .showAddresses(this.$store.getters.getUser.id)
-        .then(res => {
-          if (res.status === 200) {
-            this.address = res.data
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
-          } else {
-            this.notifyError('获取收货地址失败', res.msg)
-          }
-        })
-        .catch(err => {
-          this.notifyError('获取收货地址失败', err)
-        })
-    },
+    ...mapActions(['setAddress', 'addAddress', 'deleteAddressMap']),
+    // getAddresses() {
+    //   addressesAPI
+    //     .showAddresses(this.$store.getters.getUser.id)
+    //     .then(res => {
+    //       if (res.code == 200) {
+    //         console.log(res)
+    //         //this.address = res.data
+    //       } else if (res.status === 20001) {
+    //         //token过期，需要重新登录
+    //         this.loginExpired(res.msg)
+    //       } else {
+    //         this.notifyError('获取收货地址失败', res.msg)
+    //       }
+    //     })
+    //     .catch(err => {
+    //       this.notifyError('获取收货地址失败', err)
+    //     })
+    // },
     mouseEnter(item) {
-      item.seen = true
-      this.confirmAddress = item.id
+      this.confirmAddress = item
     },
-    mouseLeave(item) {
-      item.seen = false
-      this.confirmAddress = 0
+    mouseLeave() {
+      this.confirmAddress = -1
     },
-    edit(item) {
-      this.form = item
-      this.editVisible = true
-    },
-    deleteDialog(val, index) {
-      this.addressID = val
-      this.addressIndex = index
+    deleteDialog() {
       this.deleteVisible = true
+      this.deleteIndex = this.confirmAddress
     },
     postEdit() {
-      this.form.user_id = this.$store.getters.getUser.id
+      let payload = this.form.name + "@" + this.form.phone + "@" + this.form.address
       addressesAPI
-        .postAddress(this.form)
+        .postAddress({address: payload})
         .then(res => {
-          if (res.status === 200) {
-            this.address = res.data
+          if (res.code == 200) {
+            this.addAddress({id:this.getAvailableIndex, info: payload })
             this.addVisible = false
             this.notifySucceed('新建收货地址成功')
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
           } else {
             this.notifyError('新建收货地址失败', res.msg)
           }
@@ -182,39 +206,17 @@ export default {
           this.notifyError('新建收货地址失败', err)
         })
     },
-    saveEdit() {
-      this.form.user_id = this.$store.getters.getUser.id
+    deleteAddressFunc() {
+      //let payload =
       addressesAPI
-        .updateAddress(this.form)
+        .deleteAddress(this.deleteIndex)
         .then(res => {
-          if (res.status === 200) {
-            this.address = res.data
-            this.editVisible = false
-            this.notifySucceed('修改收货地址成功')
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
-          } else {
-            this.notifyError('修改收货地址失败', res.msg)
-          }
-        })
-        .catch(err => {
-          this.notifyError('修改收货地址失败', err)
-        })
-    },
-    deleteAddress() {
-      addressesAPI
-        .deleteAddress(this.addressID)
-        .then(res => {
-          if (res.status === 200) {
-            this.address.splice(this.addressIndex, 1)
+          if (res.code == 200) {
+            this.deleteAddressMap(this.getAddress[this.deleteIndex].id)
             this.deleteVisible = false
             this.notifySucceed('删除收货地址成功')
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
           } else {
-            this.notifyError('删除收货地址失败', res.msg)
+            this.notifyError('删除收货地址失败', res.message)
           }
         })
         .catch(err => {
@@ -224,6 +226,10 @@ export default {
   },
   components: {
     CenterMenu
+  },
+  computed:{
+    ...mapGetters(['getAddress', 'getAvailableIndex']),
+
   }
 }
 </script>
