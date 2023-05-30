@@ -12,8 +12,16 @@ import axios from 'axios'
 const postCart = form => axios.post('/api/v1/carts', form).then(res => res.data)
 
 // 读取购物车
-const showCarts = user_id =>
-  axios.get(`/api/v1/carts/${user_id}`).then(res => res.data)
+const showCarts = () =>
+  axios.get(`/api/shopping/listCart`,{
+    params: {
+      limit: 10000,
+      page: 1
+    },
+    headers: {
+      token: localStorage.getItem("token"),
+    },
+  }).then(res => res.data)
 
 // 更新购物车
 const updateCart = form =>

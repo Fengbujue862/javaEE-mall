@@ -36,7 +36,6 @@
               <div class="user-data">
                 <ul>
                   <li v-if="this.$store.getters.getEmail ===''">
-                    点此
                     <a href="javascript:;" @click="addVisible=true">绑定邮箱</a>
                   </li>
                   <li v-else>
@@ -70,26 +69,7 @@
                 </p>
               </div>
             </div>
-            <div class="user-details1">
-              <div class>
-                <img src="https://s01.mifile.cn/i/user/portal-icon-3.png" />
-              </div>
-              <div class="operate1">
-                <p class="oper-title">待评价商品：0</p>
-                <p>
-                  <router-link to class="oper-href">查看待评价订单 ></router-link>
-                </p>
-              </div>
-              <div class="operate">
-                <img src="https://s01.mifile.cn/i/user/portal-icon-4.png" />
-              </div>
-              <div class="operate1">
-                <p class="oper-title">收藏的商品：{{favoriteTotal}}</p>
-                <p>
-                  <router-link :to="{ path: '/favorite'}" class="oper-href">查看收藏的商品 ></router-link>
-                </p>
-              </div>
-            </div>
+
           </div>
           <!-- 修改邮箱弹出框 -->
           <el-dialog title="修改邮箱" :visible.sync="changeVisible" width="25%" center>
@@ -149,7 +129,6 @@ export default {
   data() {
     return {
       clock: 0,
-      favoriteTotal: 0,
       notPayTotal: 0,
       payTotal: 0,
       addVisible: false,
@@ -163,6 +142,7 @@ export default {
         password: '',
         verifyCode: '',
         email: '',
+        modify: true,
       },
       userInfo:{},
     }
@@ -231,19 +211,28 @@ export default {
           }
       })
     },
-    getCount() {
-      countAPI
-        .showCount(localStorage.getItem('user_id'))
+    getPaidCount() {
+      userAPI
+        .getSumPaid()
         .then(res => {
-          if (res.status === 200) {
-            this.favoriteTotal = res.data.favorite_total
-            this.notPayTotal = res.data.not_pay_total
-            this.payTotal = res.data.pay_total
-          } else if (res.status === 20001) {
-            //token过期，需要重新登录
-            this.loginExpired(res.msg)
+          if (res.code == 200) {
+            this.payTotal = res.data.total
           } else {
-            this.notifyError('获取数量失败', res.msg)
+            this.notifyError('获取数量失败', res.message)
+          }
+        })
+        .catch(err => {
+          this.notifyError('获取数量失败', err)
+        })
+    },
+    getUnpaidCount() {
+      userAPI
+        .getSumUnpaid()
+        .then(res => {
+          if (res.code == 200) {
+            this.notPayTotal = res.data.total
+          } else {
+            this.notifyError('获取数量失败', res.message)
           }
         })
         .catch(err => {
@@ -267,7 +256,8 @@ export default {
     },
   },
   created() {
-    this.getCount()
+    this.getPaidCount()
+    this.getUnpaidCount()
   },
   components: {
     CenterMenu

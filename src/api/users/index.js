@@ -37,8 +37,6 @@ const showInfo = form =>
       token: localStorage.getItem("token"),
     },
   }).then(res => res.data)
-//检验token
-const checkToken = () => axios.get('/api/v1/ping').then(res => res.data)
 //修改信息
 const updateUser = form => axios.post('/api/user/modifyUserInfo', form, {
   headers: {
@@ -46,23 +44,54 @@ const updateUser = form => axios.post('/api/user/modifyUserInfo', form, {
   },
 }).then(res => res.data)
 
+
 //发送验证码邮件
 const sendEmail = form =>
   axios.post('/api/user/sendRegistrationVerificationCode',form).then(res => res.data)
 
+const getSumPaid = () =>
+  axios.get('/api/shopping/listOrders', {
+    params: {
+      limit: 10000,
+      page: 1,
+      state: "PAID"
+    },
+    headers: {
+      token: localStorage.getItem("token"),
+    },
+
+  }).then(res => res.data)
+
+const getSumUnpaid = () =>
+  axios.get('/api/shopping/listOrders', {
+    params: {
+      limit: 10000,
+      page: 1,
+      state: "UNPAID"
+    },
+    headers: {
+      token: localStorage.getItem("token"),
+    },
+
+  }).then(res => res.data)
+//登出
+const postLogout = form =>
+  axios.get('/api/user/logout', {
+    headers: {
+      token: localStorage.getItem("token"),
+    },
+  }).then(res => res.data)
 //绑定或解绑邮箱
 const vaildEmail = val =>
   axios.post('/api/v1/user/vaild-email', { token: val }).then(res => res.data)
 
-//QQ初始化
-const qqInit = () => axios.get('/api/v1/qq/login').then(res => res.data)
+
 //QQ登录
 const qqLogin = code =>
   axios
     .post('/api/v1/qq/login', { authorization_code: code })
     .then(res => res.data)
-//极验初始化
-const geetest = () => axios.get('/api/v1/geetest').then(res => res.data)
+
 
 export {
   postUser,
@@ -71,11 +100,11 @@ export {
   changeCodeEmail,
   changeEmail,
   showInfo,
-  checkToken,
   updateUser,
   sendEmail,
+  getSumUnpaid,
+  getSumPaid,
+  postLogout,
   vaildEmail,
-  qqInit,
   qqLogin,
-  geetest
 }

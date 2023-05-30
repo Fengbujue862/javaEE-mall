@@ -9,7 +9,11 @@ import axios from 'axios'
 
 // 创建购物车
 const postAddress = form =>
-  axios.post('/api/v1/addresses', form).then(res => res.data)
+  axios.post('/api/user/addAddress', form, {
+  headers: {
+    token: localStorage.getItem("token"),
+  },
+  }).then(res => res.data)
 
 // 读取购物车
 const showAddresses = user_id =>
@@ -22,8 +26,10 @@ const updateAddress = form =>
 // 删除购物车
 const deleteAddress = addressID =>
   axios
-    .delete('/api/v1/addresses', {
-      data: { address_id: addressID }
+    .post('/api/user/deleteAddress', { index: addressID }, {
+      headers: {
+        token: localStorage.getItem("token"),
+      },
     })
     .then(res => res.data)
 

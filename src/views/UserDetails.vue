@@ -73,7 +73,7 @@ export default {
       file: [],
       form: {
         avatar: '',
-        username: ''
+        username: '',
       },
       rules: {
         username: [{ validator: validateUser, trigger: 'blur' }]
