@@ -63,7 +63,7 @@
                   @current-change="handleCurrentChange"
                   :page-size="pageSize"
                   layout="total, prev, pager, next, jumper"
-                  :total="total"
+                  :total="digtotal"
                 ></el-pagination>
               </div>
               <!-- 分页END -->
@@ -84,7 +84,7 @@
                   @current-change="handleCurrentChange"
                   :page-size="pageSize"
                   layout="total, prev, pager, next, jumper"
-                  :total="total"
+                  :total="clothtotal"
                 ></el-pagination>
               </div>
               <!-- 分页END -->
@@ -105,7 +105,7 @@
                   @current-change="handleCurrentChange"
                   :page-size="pageSize"
                   layout="total, prev, pager, next, jumper"
-                  :total="total"
+                  :total="foodtotal"
                 ></el-pagination>
               </div>
               <!-- 分页END -->
@@ -127,7 +127,7 @@
                   @current-change="handleCurrentChange"
                   :page-size="pageSize"
                   layout="total, prev, pager, next, jumper"
-                  :total="total"
+                  :total="searchtotal"
                 ></el-pagination>
               </div>
               <!-- 分页END -->
@@ -157,6 +157,10 @@ export default {
       searchproduct:[],
       productList: '',
       total: 0, // 商品总量
+      digtotal:0,
+      foodtotal:0,
+      clothtotal:0,
+      searchtotal:0,
       pageSize: 15, // 每页显示的商品数量
       currentPage: 1, //当前页码
       activeName: '0', // 分类列表当前选中的id
@@ -200,6 +204,7 @@ export default {
         }
       }).then(res => {
         this.digproduct=res.data.data.list
+        this.digtotal=res.data.data.total
       })
       axios.get('/api/goods/list', {
         headers: {
@@ -213,6 +218,7 @@ export default {
         }
       }).then(res => {
         this.foodproduct=res.data.data.list
+        this.foodtotal=res.data.data.total
       })
       axios.get('/api/goods/list', {
         headers: {
@@ -226,6 +232,7 @@ export default {
         }
       }).then(res => {
         this.clothproduct=res.data.data.list
+        this.clothtotal=res.data.data.total
       })
       axios.get('/api/goods/list', {
         headers: {
@@ -238,6 +245,7 @@ export default {
         }
       }).then(res => {
         this.product=res.data.data.list
+        this.total=res.data.data.total
       })
     },
 
@@ -258,6 +266,7 @@ export default {
         }
       }).then(res => {
         this.searchproduct=res.data.data.list
+        this.searchtotal=res.data.data.total
       })
     },
 

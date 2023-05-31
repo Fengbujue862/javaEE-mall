@@ -135,7 +135,7 @@
             <span class="total-price-title">合计：</span>
             <span class="total-price">{{this.totalprice}}元</span>
           </span>
-          <router-link :to="this.totalprice > 0 ? '/confirmOrder' : ''">
+          <router-link :to="this.totalprice > 0 ? '/confirmOrder' : ''" @click="getClick">
             <div :class="this.totalprice > 0 ? 'btn-primary' : 'btn-primary-disabled'">去结算</div>
           </router-link>
         </div>
@@ -165,7 +165,7 @@ import el from 'element-ui/src/locale/lang/el'
 export default {
   data() {
     return {
-      getShoppingCart: [],
+      getShoppingCart: [],//购物车列表
       number: [],
       goodsnum: 0,
       checkAll: false,
@@ -175,6 +175,7 @@ export default {
       checkednum: 0,
       totalprice:0,
       maxprice:0,
+      recordID:[],
     }
   },
   activated() {
@@ -273,6 +274,23 @@ export default {
       //     this.choose[i]=false
       //   }
       // }
+    },
+    getClick(){
+      var i,n=this.goodsnum
+      for(i=0;i<n;i++){
+        if(this.choose[i]===true){
+          this.recordID.push(this.getShoppingCart[i].id)
+        }
+      }
+      axios.post('/api/shopping/bulkOrder', {
+        "recordIds": this.recordID,
+      },{
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        this.notifySucceed('订单生成')
+      })
     },
     //...mapActions(['updateShoppingCart', 'deleteShoppingCart', 'checkAll']),
     // 修改商品数量的时候调用该函数
