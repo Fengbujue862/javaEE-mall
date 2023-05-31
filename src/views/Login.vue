@@ -78,7 +78,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setUsername', 'setUserid', 'setAvatar', 'setEmail', 'setAddress', 'setAvailableIndex']),
+    ...mapActions(['setUsername', 'setUserid', 'setAvatar', 'setEmail','setProperty', 'setAddress', 'setAvailableIndex']),
     getInfo(){
       userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
         if (res.code == 200) {
@@ -87,6 +87,7 @@ export default {
           this.setUsername(res.data[0].username)
           this.setEmail(res.data[0].email)
           this.setAvatar(res.data[0].avatar)
+          this.setProperty(res.data[0].property)
           this.setAddress(res.data[0].shippingAddress)
           this.setAvailableIndex(res.data[0].shippingAddress.length)
         } else {

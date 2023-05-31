@@ -135,7 +135,7 @@
             <span class="total-price-title">合计：</span>
             <span class="total-price">{{this.totalprice}}元</span>
           </span>
-          <router-link :to="this.totalprice > 0 ? '/confirmOrder' : ''" @click="getClick">
+          <router-link :to="''" @click.native='getClick'>
             <div :class="this.totalprice > 0 ? 'btn-primary' : 'btn-primary-disabled'">去结算</div>
           </router-link>
         </div>
@@ -182,6 +182,7 @@ export default {
     this.load()
   },
   methods: {
+    ...mapActions(['setOrderId']),
     load(){
       axios.get('/api/shopping/listCart', {
         headers: {
@@ -194,7 +195,7 @@ export default {
       }).then(res => {
         this.getShoppingCart=res.data.data.list
         this.goodsnum=res.data.data.total
-        console.log(this.getShoppingCart)
+        //console.log(this.getShoppingCart)
         var len = this.goodsnum,i
         for (i = 0; i < len; i++) {
           this.choose[i]=false
@@ -289,7 +290,10 @@ export default {
           token: localStorage.getItem("token"),
         },
       }).then(res => {
-        this.notifySucceed('订单生成')
+        this.notifySucceed('订单生成');
+        console.log(res.data.data.id+"cc")
+        this.setOrderId(res.data.data.id)
+        this.$router.push('/confirmOrder')
       })
     },
     //...mapActions(['updateShoppingCart', 'deleteShoppingCart', 'checkAll']),

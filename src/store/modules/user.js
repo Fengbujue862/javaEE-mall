@@ -15,6 +15,8 @@ export default {
     avatar: '',
     address: [],
     availableIndex: 0,
+    property:'',
+    orderId:'',
   },
   getters: {
     getUser(state) {
@@ -37,7 +39,13 @@ export default {
     },
     getAvailableIndex(state) {
       return state.availableIndex
-    }
+    },
+    getProperty(state) {
+      return state.property
+    },
+    getOrderId(state) {
+      return state.orderId
+    },
   },
   mutations: {
     setUser(state, data) {
@@ -54,6 +62,12 @@ export default {
     },
     setAvatar(state, data) {
       state.avatar = data
+    },
+    setProperty(state, data) {
+      state.property = data
+    },
+    setOrderId(state, data) {
+      state.orderId = data
     },
     setAddress(state, data) {
       //state.address = data
@@ -103,6 +117,12 @@ export default {
     },
     setAddress({ commit }, data) {
       commit('setAddress', data)
+    },
+    setProperty({ commit }, data) {
+      commit('setProperty', data)
+    },
+    setOrderId({ commit }, data) {
+      commit('setOrderId', data)
     },
     addAddress({ commit }, data) {
       commit('addAddress', data)

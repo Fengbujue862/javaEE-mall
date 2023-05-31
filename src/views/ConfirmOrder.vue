@@ -85,13 +85,13 @@
         <p class="title">商品</p>
         <div class="goods-list">
           <ul>
-            <li v-for="item in cart.orderlistproduct" :key="item.id">
-              <img :src="item.img_path" />
-              <span class="pro-name">{{item.name}}</span>
-              <span class="pro-price">{{item.discount_price}}元</span>
-              <span class="pro-num">x {{item.num}}</span>
+            <li v-for="(item,index) in cart.goodsInfo" :key="index">
+              <img :src="item.goods.picture" />
+              <span class="pro-name">{{item.goods.name}}</span>
+              <span class="pro-price">{{item.goods.price| numFilter}}元</span>
+              <span class="pro-num">x {{item.amount}}</span>
               <span class="pro-status"></span>
-              <span class="pro-total">{{item.discount_price * item.num}}元</span>
+              <span class="pro-total">{{item.goods.price * item.amount}}元</span>
             </li>
           </ul>
         </div>
@@ -103,12 +103,8 @@
         <div class="money-box">
           <ul>
             <li>
-              <span class="title">商品件数：</span>
-              <span class="value">{{cart.num}}件</span>
-            </li>
-            <li>
               <span class="title">商品总价：</span>
-              <span class="value">{{cart.price}}元</span>
+              <span class="value">{{cart.price| numFilter}}元</span>
             </li>
             <li>
               <span class="title">运费：</span>
@@ -117,7 +113,7 @@
             <li class="total">
               <span class="title">应付总额：</span>
               <span class="value">
-                <span class="total-price">{{cart.price}}</span>元
+                <span class="total-price">{{cart.price| numFilter}}</span>元
               </span>
             </li>
           </ul>
@@ -159,7 +155,7 @@
           <span style="margin-right:5px">{{this.$store.getters.getUsername}}</span>
         </el-form-item>
         <el-form-item label="充值金额">
-          <el-input v-model="user_account.account"></el-input>
+          <el-input v-model="input"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -174,6 +170,7 @@
 import { mapGetters } from 'vuex'
 import { mapActions } from 'vuex'
 import axios from 'axios'
+import * as userAPI from '@/api/users'
 //import * as addressesAPI from '@/api/addresses'
 //import * as ordersAPI from '@/api/orders'
 //import * as cartsAPI from '@/api/carts'
@@ -183,6 +180,7 @@ export default {
     return {
       // 选择的地址id
       confirmAddress: -1,
+      chosenAddress:'',
       // 地址列表
       address: [],
       addresslist:'',
@@ -193,46 +191,68 @@ export default {
         phone: '',
         address: ''
       },
+      input:'',
       user_account: {
         id:1,
         account:'',
       },
       cart:'',
-      cartslist:
-        {
-          num:2,
-          price:11,
-          orderlistproduct:[{
-            product_id:1,
-            name:'product1',//product
-            num:1,//product
-            img_path:"../assets/imgs/error.png",
-            discount_price:2,
-          },
-            {
-              product_id:2,
-              name:'product2',//product
-              num:2,//product
-              img_path:"../assets/imgs/error.png",
-              discount_price:4,
-            }],
-          user_id:1,
-          user_account:2
-        }, // 结算列表
+      cartlist: {
+        "address": "string",
+        "createTime": "2023-05-31T02:30:09.590Z",
+        "goodsInfo": [
+          {
+            "amount": "string",
+            "goods": {
+              "amount": "string",
+              "createTime": "2023-05-31T02:30:09.590Z",
+              "description": "string",
+              "discount": "string",
+              "id": "string",
+              "modifyTime": "2023-05-31T02:30:09.590Z",
+              "name": "string",
+              "originalPrice": "string",
+              "picture": "string",
+              "price": "string",
+              "sales": "string",
+              "state": "string",
+              "type": "string",
+              "viewCnt": "string"
+            }
+          }
+        ],
+        "id": "string",
+        "modifyTime": "2023-05-31T02:30:09.590Z",
+        "price": "string",
+        "state": "string",
+        "userId": "string"
+      },
+      orderid:'', // 结算列表
     }
   },
-  created() {
+
+  activated() {
     this.getAddress();
     this.getOrder();
-
+    this.user_account.account=this.$store.getters.getProperty;
+  },
+  filters: {
+    numFilter (value) {
+      // 截取当前数据到小数点后两位
+      let realVal = parseFloat(value).toFixed(2)
+      return realVal
+    }
   },
   methods: {
+    ...mapGetters(['getOrderId','getAddress','getProperty']),
+    ...mapActions(['setProperty']),
     selectAddress(item) {
-      this.confirmAddress = item.id
+      this.confirmAddress = item.id;
+      if(this.confirmAddress!=-1) this.chosenAddress=this.address[this.confirmAddress].info.toString().slice(this.address[this.confirmAddress].info.toString().lastIndexOf("@") + 1)
     },
     getAddress() {
       this.addresslist=this.$store.getters.getAddress
-      console.log(this.addresslist)
+      //console.log(this.addresslist)
       this.address=this.addresslist;
       /*
       addressesAPI
@@ -254,7 +274,27 @@ export default {
        */
     },
     getOrder() {
-      this.cart=this.cartslist;
+      //this.cart=this.cartlist;
+      this.orderid=this.$store.getters.getOrderId
+      axios.get('http://82.156.143.194:8090/shopping/findOrderById', {
+        params: {
+          orderId: this.orderid
+        },
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        if (res.status === 200) {
+          this.cart = res.data.data
+        } else if (res.status === 401) {
+          this.loginExpired(res.message)
+        } else {
+          this.notifyError('获取订单失败', res.message)
+        }
+      })
+        .catch(err => {
+          this.notifyError('获取订单失败', err)
+        })
       /*
       ordersAPI
         .showOrder(this.orderNum)
@@ -281,9 +321,38 @@ export default {
         return
       }
       else {
-        if (this.cart.price <= this.cart.user_account) {////money够就跳转
+        userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
+          if (res.code == 200) {
+            //this.setUser(res.data[0])
+            this.user_account.account=res.data[0].property;
+            this.setProperty(res.data[0].property)
+          } else {
+            this.notifyError(res.message)
+            localStorage.removeItem('user_id')
+            localStorage.removeItem('token')
+          }
+        })
+        if (parseInt(this.cart.price) <= parseInt(this.user_account.account)) {////money够就跳转
+          axios.post('http://82.156.143.194:8090/shopping/pay', {
+            "address": this.chosenAddress,
+            "orderId": this.orderid
+          },{
+            headers: {
+              token: localStorage.getItem("token"),
+            },
+          }).then(res => {
+            if (res.status === 200) {
+              this.notifySucceed('付款成功')
+            } else if (res.status === 401) {
+              this.loginExpired(res.message)
+            } else {
+              this.notifyError('付款失败', res.message)
+            }
+          })
+            .catch(err => {
+              this.notifyError('付款失败', err)
+            })
           this.$router.push({ path: '/order' })
-          this.notifySucceed('支付成功')
           /*
           let orders = this.getCheckGoods
           for (let i = 0; i < orders.length; i++) {
@@ -342,9 +411,8 @@ export default {
     reCharge(){
       this.user_account.id=this.cart.user_id;
       axios.post('http://82.156.143.194:8090/shopping/recharge', {
-        params: {
-          value:this.user_account.account
-        },
+        "value": this.input
+      },{
         headers: {
           token: localStorage.getItem("token"),
         },
@@ -365,9 +433,8 @@ export default {
     postEdit() {
       //this.address=this.addresslist;
       axios.post('http://82.156.143.194:8090/user/addAddress', {
-        params: {
-          value:this.form.address
-        },
+        "value": this.form.address
+      },{
         headers: {
           token: localStorage.getItem("token"),
         },

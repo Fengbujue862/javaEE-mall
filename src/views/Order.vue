@@ -43,9 +43,9 @@
               <!--订单列表-->
               <div class="order-list" v-for="(item,index) in orders" :key="index">
                 <div class="order-list-head">
-                  <div class="order-pay" v-if="item.state=='UNPAID'">等待付款</div>
-                  <div class="order-pay" v-if="item.state=='PAID'">已付款</div>
-                  <div class="order-pay" v-else>已取消</div>
+                  <div class="order-pay" v-if="item.state=='未支付'">等待付款</div>
+                  <div class="order-pay" v-if="item.state=='已支付'">已付款</div>
+                  <div class="order-pay" v-if="item.state=='已取消'">已取消</div>
                   <div class="order-info">
                     <div style="width:650px;">
                       <span class="info">{{item.createTime}}</span>
@@ -56,8 +56,8 @@
                       <span class="cut">|</span>
                       <span class="info">在线支付</span>
                     </div>
-                    <span class="info" style="margin-left:30px">应付金额：</span>
-                    <span class="money">{{item.price}}</span>
+                    <span class="info" style="margin-left:0px">应付金额：</span>
+                    <span class="money">{{item.price | numFilter}}</span>
                     <span class="info">元</span>
                   </div>
                 </div>
@@ -76,24 +76,27 @@
                         :to="{ path: '/goods/details', query: {productID:item1.goods.id} }"
                       >{{item1.goods.name}}</router-link>
                     </p>
-                    <span>{{item1.goods.price}}</span>&nbsp;×
+                    <span>{{item1.goods.price | numFilter}}</span>&nbsp;×
                     <span>{{item1.amount}}</span>
                   </div>
-                  <div class="operate">
-                    <div v-if="item.state=='UNPAID'">
-                      <router-link :to="{ path: '/confirmOrder', query: {orderNum:item.id} }">
+                  <div class="operate" v-if="index==0">
+                    <div v-if="item.state=='未支付'">
+                      <router-link :to="''" @click.native='getClick(item.id)'>
                         <el-button class="button-pay">立即付款</el-button>
                       </router-link>
                     </div>
-                    <div v-if="item.state=='PAID'">
+                    <div v-if="item.state=='已支付'">
                       <router-link
                         :to="{ path: '/order/details', query: {orderNum:item.id} }"
                       >
                         <el-button plain class="button-detail">订单详情</el-button>
                       </router-link>
                     </div>
-                    <div v-if="item.state=='UNPAID'">
-                      <el-button type="info" class="button-detail">取消订单</el-button>
+                    <div v-if="item.state=='未支付'">
+                      <el-button type="info" class="button-detail" @click='cancelOrder(item.id)'>取消订单</el-button>
+                    </div>
+                    <div v-if="item.state=='已支付'">
+                      <el-button type="info" class="button-detail" @click='deleteOrder(item.id)'>删除订单</el-button>
                     </div>
                   </div>
                 </div>
@@ -128,6 +131,7 @@
 import CenterMenu from '../components/CenterMenu'
 import axios from 'axios'
 import * as ordersAPI from '@/api/orders'
+import { mapActions } from 'vuex'
 export default {
   name: 'Order',
   data() {
@@ -135,7 +139,7 @@ export default {
       orders: [], // 订单列表
       pageSize: 5,
       total: 0,
-      start: 0,
+      start: 1,
       limit: 5,
       type: '',
       search:'',
@@ -225,6 +229,7 @@ export default {
     } else {
       this.type = 0
     }
+    this.getOrders()
   },
   watch: {
     // 监听订单类型的变化，请求后端获取商品数据
@@ -232,38 +237,102 @@ export default {
       this.getOrders()
     }
   },
+  filters: {
+    numFilter (value) {
+      // 截取当前数据到小数点后两位
+      let realVal = parseFloat(value).toFixed(2)
+      return realVal
+    }
+  },
   methods: {
+    ...mapActions(['setOrderId']),
+    getClick(id) {
+      this.setOrderId(id)
+      this.$router.push('/confirmOrder')
+    },
     handleCurrentChange(val) {
-      this.start = this.limit * (val - 1) // val 页面
+      this.start = val; // val 页面
       this.getOrders()
     },
-    getOrders() {
-      this.orders=this.list;
-      if(this.type==3){
-        axios.get('http://82.156.143.194:8090/shopping/listOrders', {
-          params: {
-            keyword:this.search,
-            page:this.start,
-            limit:this.limit,
-          },
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        }).then(res => {
-          if (res.status === 200) {
-            this.orders = res.data.list
-            this.total = res.data.total
-          } else if (res.status === 401) {
-            this.loginExpired(res.message)
-          } else {
-            this.notifyError('获取订单失败', res.message)
-          }
+    searchClick(){
+      this.type=3;
+      this.getOrders();
+    },
+    cancelOrder(orderid){
+      axios.post('http://82.156.143.194:8090/shopping/cancelOrder', {
+        "id": orderid,
+      },{
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        if (res.status === 200) {
+          this.notifySucceed('取消成功')
+        } else if (res.status === 401) {
+          this.loginExpired(res.message)
+        } else {
+          this.notifyError('取消失败', res.message)
+        }
+      })
+        .catch(err => {
+          this.notifyError('取消失败', err)
         })
-          .catch(err => {
-            this.notifyError('获取订单失败', err)
+      this.$router.go(0)
+    },
+    deleteOrder(orderid){
+      axios.post('http://82.156.143.194:8090/shopping/deleteOrder', {
+        "id": orderid,
+      },{
+        headers: {
+          token: localStorage.getItem("token"),
+        },
+      }).then(res => {
+        if (res.status === 200) {
+          this.notifySucceed('删除成功')
+        } else if (res.status === 401) {
+          this.loginExpired(res.message)
+        } else {
+          this.notifyError('删除失败', res.message)
+        }
+      })
+        .catch(err => {
+          this.notifyError('删除失败', err)
+        })
+      this.$router.go(0)
+    },
+    getOrders() {
+      //this.orders=this.list;
+      if(this.type==3){
+        if(this.search==''){
+          this.notifyError('搜索不能为空');
+          this.type=0;
+        } else {
+          axios.get('http://82.156.143.194:8090/shopping/listOrders', {
+            params: {
+              keyword: this.search,
+              page: this.start,
+              limit: this.limit,
+            },
+            headers: {
+              token: localStorage.getItem("token"),
+            },
+          }).then(res => {
+            if (res.status === 200) {
+              this.orders = res.data.data.list
+              this.total = res.data.data.total
+            } else if (res.status === 401) {
+              this.loginExpired(res.message)
+            } else {
+              this.notifyError('获取订单失败', res.message)
+            }
           })
+            .catch(err => {
+              this.notifyError('获取订单失败', err)
+            })
+        }
       }
       else if(this.type==0){
+        console.log("cccc")
         axios.get('http://82.156.143.194:8090/shopping/listOrders', {
           params: {
             page:this.start,
@@ -274,8 +343,9 @@ export default {
           },
         }).then(res => {
           if (res.status === 200) {
-            this.orders = res.data.list
-            this.total = res.data.total
+            this.orders = res.data.data.list
+            console.log(this.orders)
+            this.total = res.data.data.total
           } else if (res.status === 401) {
             this.loginExpired(res.message)
           } else {
@@ -298,8 +368,8 @@ export default {
           },
         }).then(res => {
           if (res.status === 200) {
-            this.orders = res.data.list
-            this.total = res.data.total
+            this.orders = res.data.data.list
+            this.total = res.data.data.total
           } else if (res.status === 401) {
             this.loginExpired(res.message)
           } else {
@@ -322,8 +392,8 @@ export default {
           },
         }).then(res => {
           if (res.status === 200) {
-            this.orders = res.data.list
-            this.total = res.data.total
+            this.orders = res.data.data.list
+            this.total = res.data.data.total
           } else if (res.status === 401) {
             this.loginExpired(res.message)
           } else {

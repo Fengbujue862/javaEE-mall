@@ -156,6 +156,7 @@ export default {
           this.setUsername(res.data[0].username)
           this.setEmail(res.data[0].email)
           this.setAvatar(res.data[0].avatar)
+          this.setProperty(res.data[0].property)
           this.setAddress(res.data[0].shippingAddress)
           this.setAvailableIndex(res.data[0].shippingAddress.length)
           //this.setUser(res.data[0])
@@ -217,7 +218,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setUserid', 'setShoppingCart', 'setEmail', 'setAvatar', 'setUsername', 'setAddress', 'setAvailableIndex']),
+    ...mapActions(['setUserid', 'setShoppingCart', 'setEmail', 'setAvatar', 'setProperty','setUsername', 'setAddress', 'setAvailableIndex']),
     login() {
       this.$router.push({
         name: 'Login'
@@ -235,6 +236,7 @@ export default {
           this.setAvatar('')
           this.setEmail('')
           this.setUsername('')
+          this.setProperty('')
           this.setAddress([])
           this.setAvailableIndex(0)
           this.$router.push({

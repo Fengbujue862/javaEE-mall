@@ -7,7 +7,7 @@
 --> 
 <template>
   <div class="order-details" id="order-details" name="order-details">
-    <div class="order-details-layout" v-if="order">
+    <div class="order-details-layout" v-if="orderNum!=-1">
       <el-row :gutter="10">
         <div>
           <CenterMenu></CenterMenu>
@@ -38,7 +38,7 @@
               </div>
               <div class="pro-price">
                 <span>
-                  {{item.goods.price}} 元&nbsp;×
+                  {{item.goods.price | numFilter}} 元&nbsp;×
                   {{item.amount}}
                 </span>
               </div>
@@ -47,12 +47,10 @@
             <div class="order-address">
               <div class="order-address-head">
                 <p>姓名：</p>
-                <p>联系方式：</p>
                 <p>收货地址：</p>
               </div>
               <div class="order-address-data">
                 <p>{{name}}</p>
-                <p>{{phone}}</p>
                 <p>{{order.address}}</p>
               </div>
             </div>
@@ -62,7 +60,7 @@
                 <ul>
                   <li>
                     <span class="title">商品总价：</span>
-                    <span class="value">{{order.price}}元</span>
+                    <span class="value">{{order.price | numFilter}}元</span>
                   </li>
                   <li>
                     <span class="title">运费：</span>
@@ -71,7 +69,7 @@
                   <li class="total">
                     <span class="title">订单总额：</span>
                     <span class="value">
-                      <span class="total-price">{{order.price}}</span>元
+                      <span class="total-price">{{order.price | numFilter}}</span>元
                     </span>
                   </li>
                 </ul>
@@ -86,13 +84,15 @@
 </template>
 <script>
 import CenterMenu from '../components/CenterMenu'
+import axios from 'axios'
+import { mapGetters } from 'vuex'
 export default {
   name: 'OrderDetails',
   data() {
     return {
+      orderNum:'',
       order: '',
       name:'',
-      phone:'',
       form:'',
       orderslist:{
         id:'',
@@ -103,21 +103,47 @@ export default {
       },// 订单列表
     }
   },
-  beforeMount() {
-    this.form=this.$store.getters.getAddress
-    this.name=this.form[0].info.toString().slice(0, this.form[0].info.toString().indexOf("@"))
-    this.phone=this.form[0].info.toString().slice(this.form[0].info.toString().indexOf("@") + 1, this.form[0].info.toString().lastIndexOf("@"))
-    this.orderslist.id=this.$store.getters.getOrderid
-    this.orderslist.createTime=this.$store.getters.getCreatetime
-    this.orderslist.price=this.$store.getters.getPrice
-    this.orderslist.address=this.form[0].info.toString().slice(this.form[0].info.toString().lastIndexOf("@") + 1)
-    this.orderslist.goodsInfo=this.$store.getters.getGoodsinfo
-    //console.log(this.orderslist)
-    this.load()
+  activated() {
+    if (this.$route.query.orderNum != undefined) {
+      this.orderNum = this.$route.query.orderNum
+    } else {
+      this.orderNum = -1
+    }
+    this.load();
+  },
+  filters: {
+    numFilter (value) {
+      // 截取当前数据到小数点后两位
+      let realVal = parseFloat(value).toFixed(2)
+      return realVal
+    }
   },
   methods: {
+    ...mapGetters(['getUsername']),
     load() {
-      this.order=this.orderslist;
+      //this.order=this.orderslist;
+      this.name=this.$store.getters.getUsername;
+      if(this.orderNum!=-1) {
+        axios.get('http://82.156.143.194:8090/shopping/findOrderById', {
+          params: {
+            orderId: this.orderNum
+          },
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        }).then(res => {
+          if (res.status === 200) {
+            this.order = res.data.data
+          } else if (res.status === 401) {
+            this.loginExpired(res.message)
+          } else {
+            this.notifyError('获取订单失败', res.message)
+          }
+        })
+          .catch(err => {
+            this.notifyError('获取订单失败', err)
+          })
+      }
       /*
       ordersAPI
         .showOrder(this.orderNum)
@@ -215,7 +241,8 @@ export default {
   color: #ff6700;
 }
 .order-details-content .order-list-product .pro-price {
-  margin-left: 620px;
+  position: absolute;
+  margin-left: 720px;
   font-size: 15px;
   color: #333333;
 }
