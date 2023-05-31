@@ -86,13 +86,13 @@ const routes = [
     }
   },
   {
-    path: '/confirmOrder',
+    path: '/confirmOrder/:orderId',
     name: 'ConfirmOrder',
     component: () => import('../views/ConfirmOrder.vue'),
     meta: {
       showMenu: false,
       requireAuth: true // 需要验证登录状态
-    }
+    },
   },
   {
     path: '/order/details',

@@ -17,9 +17,9 @@
               <li>
                 <router-link to="/center" class="menu-a">我的个人中心</router-link>
               </li>
-              <li>
-                <router-link to="/favorite" class="menu-a">我的收藏</router-link>
-              </li>
+<!--              <li>-->
+<!--                <router-link to="/favorite" class="menu-a">我的收藏</router-link>-->
+<!--              </li>-->
               <li>
                 <router-link to="/order" class="menu-a">我的订单</router-link>
               </li>
@@ -39,12 +39,12 @@
                 <router-link to="/user/address" class="menu-a">收货地址</router-link>
               </li>
             </ul>
-            <p class="submenu">关于</p>
-            <ul class="menu-ul">
-              <li>
-                <router-link to="/about" class="menu-a">关于网站</router-link>
-              </li>
-            </ul>
+<!--            <p class="submenu">关于</p>-->
+<!--            <ul class="menu-ul">-->
+<!--              <li>-->
+<!--                <router-link to="/about" class="menu-a">关于网站</router-link>-->
+<!--              </li>-->
+<!--            </ul>-->
           </div>
 
           <div class="extra"></div>

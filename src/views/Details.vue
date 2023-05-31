@@ -20,10 +20,10 @@
           <div class="select">
             <el-button type="text" class="list-select" @click="goParam">参数</el-button>
           </div>
-          <span class="cut">|</span>
-          <div class="select">
-            <el-button type="text" class="list-select">用户评价</el-button>
-          </div>
+<!--          <span class="cut">|</span>-->
+<!--          <div class="select">-->
+<!--            <el-button type="text" class="list-select">用户评价</el-button>-->
+<!--          </div>-->
         </div>
       </div>
     </div>
@@ -74,7 +74,7 @@
         <!-- 内容区底部按钮 -->
         <div class="button">
           <el-button class="shop-cart" :disabled="dis" @click="addShoppingCart">加入购物车</el-button>
-          <el-button class="like" @click="addFavorite">喜欢</el-button>
+<!--          <el-button class="like" @click="addFavorite">喜欢</el-button>-->
         </div>
         <el-input-number v-model="num" @change="handleChange" :min="1"  label="购买数" style='margin-bottom: 5%'></el-input-number>
         <!-- 内容区底部按钮END -->

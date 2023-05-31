@@ -41,9 +41,9 @@
                 </el-dropdown>
               </div>
             </li>
-            <li class="font">
-              <router-link to="/favorite">我的收藏</router-link>
-            </li>
+<!--            <li class="font">-->
+<!--              <router-link to="/favorite">我的收藏</router-link>-->
+<!--            </li>-->
             <li class="font">
               <router-link to="/order">我的订单</router-link>
             </li>
@@ -79,7 +79,7 @@
           </div>
           <el-menu-item index="/">首页</el-menu-item>
           <el-menu-item index="/goods">全部商品</el-menu-item>
-          <el-menu-item index="/about">关于我们</el-menu-item>
+<!--          <el-menu-item index="/about">关于我们</el-menu-item>-->
           <div class="so">
             <el-input placeholder="请输入搜索内容" v-model="search">
               <el-button slot="append" icon="el-icon-search" @click="searchClick"></el-button>
@@ -115,8 +115,8 @@
               <router-link to="/">首页</router-link>
               <span>|</span>
               <router-link to="/goods">全部商品</router-link>
-              <span>|</span>
-              <router-link to="/about">关于我们</router-link>
+<!--              <span>|</span>-->
+<!--              <router-link to="/about">关于我们</router-link>-->
             </p>
           </div>
         </div>
@@ -400,7 +400,7 @@ a:hover {
 }
 .el-header .so {
   width: 300px;
-  margin-left: 437px;
+  margin-left: 637px;
 }
 /* 顶栏容器CSS END */
 

@@ -35,12 +35,12 @@
                 <router-link to="/center">
                   <el-dropdown-item class="dropdown-menu">个人中心</el-dropdown-item>
                 </router-link>
-                <router-link to="/">
-                  <el-dropdown-item class="dropdown-menu">评价晒单</el-dropdown-item>
-                </router-link>
-                <router-link to="/favorite">
-                  <el-dropdown-item class="dropdown-menu">我的收藏</el-dropdown-item>
-                </router-link>
+<!--                <router-link to="/">-->
+<!--                  <el-dropdown-item class="dropdown-menu">评价晒单</el-dropdown-item>-->
+<!--                </router-link>-->
+<!--                <router-link to="/favorite">-->
+<!--                  <el-dropdown-item class="dropdown-menu">我的收藏</el-dropdown-item>-->
+<!--                </router-link>-->
               </el-dropdown-menu>
             </el-dropdown>
           </div>
@@ -182,7 +182,7 @@ export default {
     this.load()
   },
   methods: {
-    ...mapActions(['setOrderId']),
+    //...mapActions(['setOrderId']),
     load(){
       axios.get('/api/shopping/listCart', {
         headers: {
@@ -292,8 +292,8 @@ export default {
       }).then(res => {
         this.notifySucceed('订单生成');
         console.log(res.data.data.id+"cc")
-        this.setOrderId(res.data.data.id)
-        this.$router.push('/confirmOrder')
+        //this.setOrderId(res.data.data.id)
+        this.$router.push({name: 'ConfirmOrder' ,params:{orderId: res.data.data.id} })
       })
     },
     //...mapActions(['updateShoppingCart', 'deleteShoppingCart', 'checkAll']),

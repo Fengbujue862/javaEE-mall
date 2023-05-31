@@ -33,12 +33,12 @@
                 <router-link to="/center">
                   <el-dropdown-item class="dropdown-menu">个人中心</el-dropdown-item>
                 </router-link>
-                <router-link to="/">
-                  <el-dropdown-item class="dropdown-menu">评价晒单</el-dropdown-item>
-                </router-link>
-                <router-link to="/favorite">
-                  <el-dropdown-item class="dropdown-menu">我的收藏</el-dropdown-item>
-                </router-link>
+<!--                <router-link to="/">-->
+<!--                  <el-dropdown-item class="dropdown-menu">评价晒单</el-dropdown-item>-->
+<!--                </router-link>-->
+<!--                <router-link to="/favorite">-->
+<!--                  <el-dropdown-item class="dropdown-menu">我的收藏</el-dropdown-item>-->
+<!--                </router-link>-->
               </el-dropdown-menu>
             </el-dropdown>
           </div>
@@ -133,14 +133,14 @@
     <!-- 主要内容容器END -->
     <!-- 新建收货地址弹出框 -->
     <el-dialog title="新建收货地址" :visible.sync="addVisible" width="30%">
-      <el-form ref="form" :model="form" label-width="70px">
-        <el-form-item label="姓名">
+      <el-form ref="form" :model="form" label-width="70px" :rules="rules">
+        <el-form-item label="姓名" prop='name'>
           <el-input v-model="form.name"></el-input>
         </el-form-item>
-        <el-form-item label="手机号">
+        <el-form-item label="手机号" prop='phone'>
           <el-input v-model="form.phone"></el-input>
         </el-form-item>
-        <el-form-item label="详细地址">
+        <el-form-item label="详细地址" prop='address'>
           <el-input type="textarea" rows="5" v-model="form.address"></el-input>
         </el-form-item>
       </el-form>
@@ -178,6 +178,35 @@ import * as addressesAPI from '@/api/addresses'
 export default {
   name: '',
   data() {
+    var validatePhone = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('电话号码不能为空！'))
+      } else {
+        let pattern = /^(?:\+?86)?1\d{10}$/
+        if(!pattern.test(value)) callback(new Error('请输入正确电话号码'))
+        else {
+          callback()
+        }
+      }
+    }
+    var validateAddress = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('地址不能为空！'))
+      } else if (value.indexOf('@') !== -1) {
+        callback(new Error('姓名不能包含非法字符'))
+      } else {
+        callback()
+      }
+    }
+    var validateName = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('姓名不能为空！'))
+      } else if (value.indexOf('@') !== -1) {
+        callback(new Error('姓名不能包含非法字符'))
+      } else {
+        callback()
+      }
+    }
     return {
       // 选择的地址id
       confirmAddress: -1,
@@ -191,6 +220,11 @@ export default {
         name: '',
         phone: '',
         address: ''
+      },
+      rules: {
+        name: [{ validator: validateName, trigger: 'blur' }],
+        phone: [{ validator: validatePhone, trigger: 'blur' }],
+        address: [{ validator: validateAddress, trigger: 'blur' }],
       },
       input:'',
       user_account: {
@@ -275,22 +309,23 @@ export default {
     },
     getOrder() {
       //this.cart=this.cartlist;
-      this.orderid=this.$store.getters.getOrderId
-      userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
-        if (res.code == 200) {
-          //this.setUser(res.data[0])
-          this.user_account.account=res.data[0].property;
-          this.setProperty(res.data[0].property)
-          //console.log(res.data[0].property+"AAA")
-        } else {
-          this.notifyError(res.message)
-          localStorage.removeItem('user_id')
-          localStorage.removeItem('token')
-        }
-      })
+      this.orderid=this.$route.params.orderId
+      //console.log(this.$route.params.orderId)
+      // userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
+      //   if (res.code == 200) {
+      //     //this.setUser(res.data[0])
+      //     this.user_account.account=res.data[0].property;
+      //     this.setProperty(res.data[0].property)
+      //     //console.log(res.data[0].property+"AAA")
+      //   } else {
+      //     this.notifyError(res.message)
+      //     localStorage.removeItem('user_id')
+      //     localStorage.removeItem('token')
+      //   }
+      // })
       axios.get('http://82.156.143.194:8090/shopping/findOrderById', {
         params: {
-          orderId: this.orderid
+          orderId: this.$route.params.orderId
         },
         headers: {
           token: localStorage.getItem("token"),
@@ -298,8 +333,6 @@ export default {
       }).then(res => {
         if (res.status === 200) {
           this.cart = res.data.data
-        } else if (res.status === 401) {
-          this.loginExpired(res.message)
         } else {
           this.notifyError('获取订单失败', res.message)
         }
@@ -333,7 +366,7 @@ export default {
         return
       }
       else {
-        if (parseInt(this.cart.price) <= parseInt(this.user_account.account)) {////money够就跳转
+        if (parseInt(this.cart.price) <= parseInt(this.getProperty)) {////money够就跳转
           axios.post('http://82.156.143.194:8090/shopping/pay', {
             "address": this.chosenAddress,
             "orderId": this.orderid
@@ -344,6 +377,7 @@ export default {
           }).then(res => {
             if (res.status === 200) {
               this.notifySucceed('付款成功')
+              this.setProperty((parseInt(this.getProperty) - parseInt(this.cart.price).toString()))
               this.$router.push({ path: '/' })
             } else if (res.status === 401) {
               this.loginExpired(res.message)
@@ -420,6 +454,7 @@ export default {
       }).then(res => {
         if (res.status === 200) {
           this.notifySucceed('充值成功')
+          this.setProperty(this.input)
         } else if (res.status === 401) {
           this.loginExpired(res.message)
         } else {
@@ -496,7 +531,7 @@ export default {
 
   },
   computed:{
-    ...mapGetters(['getOrderId','getAddress','getProperty', 'getAvailableIndex']),
+    ...mapGetters(['getAddress','getProperty', 'getAvailableIndex']),
   }
 }
 </script>
