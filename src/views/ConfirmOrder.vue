@@ -13,7 +13,7 @@
       <div class="cart-header">
         <div class="logo">
           <router-link to="/">
-            <img src="../assets/imgs/clogo.png" alt />
+            <img src="../assets/imgs/img.png" alt />
           </router-link>
         </div>
         <div class="cart-header-content">
@@ -62,7 +62,7 @@
             <router-link to>
               <li
                 :class="item.id == confirmAddress ? 'in-section' : ''"
-                v-for="item in address"
+                v-for="item in getAddress"
                 :key="item.id"
                 @click="selectAddress(item)"
               >
@@ -171,6 +171,7 @@ import { mapGetters } from 'vuex'
 import { mapActions } from 'vuex'
 import axios from 'axios'
 import * as userAPI from '@/api/users'
+import * as addressesAPI from '@/api/addresses'
 //import * as addressesAPI from '@/api/addresses'
 //import * as ordersAPI from '@/api/orders'
 //import * as cartsAPI from '@/api/carts'
@@ -231,8 +232,8 @@ export default {
     }
   },
 
-  activated() {
-    this.getAddress();
+  mounted() {
+    //this.getAddress();
     this.getOrder();
     this.user_account.account=this.$store.getters.getProperty;
   },
@@ -244,11 +245,11 @@ export default {
     }
   },
   methods: {
-    ...mapGetters(['getOrderId','getAddress','getProperty']),
-    ...mapActions(['setProperty']),
+
+    ...mapActions(['setProperty', 'addAddress']),
     selectAddress(item) {
       this.confirmAddress = item.id;
-      if(this.confirmAddress!=-1) this.chosenAddress=this.address[this.confirmAddress].info.toString().slice(this.address[this.confirmAddress].info.toString().lastIndexOf("@") + 1)
+      if(this.confirmAddress!==-1) this.chosenAddress=item.info.toString().slice(item.info.toString().lastIndexOf("@") + 1)
     },
     getAddress() {
       this.addresslist=this.$store.getters.getAddress
@@ -431,27 +432,44 @@ export default {
       this.addVisible1 = false
     },
     postEdit() {
-      //this.address=this.addresslist;
-      axios.post('http://82.156.143.194:8090/user/addAddress', {
-        "value": this.form.address
-      },{
-        headers: {
-          token: localStorage.getItem("token"),
-        },
-      }).then(res => {
-        if (res.status === 200) {
-          this.notifySucceed('添加成功')
-          this.address.unshift(this.form);
-          this.addVisible=false
-        } else if (res.status === 401) {
-          this.loginExpired(res.message)
-        } else {
-          this.notifyError('添加失败', res.message)
-        }
-      })
-        .catch(err => {
-          this.notifyError('添加失败', err)
+      let payload = this.form.name + "@" + this.form.phone + "@" + this.form.address
+      addressesAPI
+        .postAddress({address: payload})
+        .then(res => {
+          if (res.code == 200) {
+            this.addAddress({id:this.getAvailableIndex, info: payload })
+            this.addVisible = false
+            this.notifySucceed('新建收货地址成功')
+          } else {
+            this.notifyError('新建收货地址失败', res.msg)
+          }
         })
+        .catch(err => {
+          this.notifyError('新建收货地址失败', err)
+        })
+    },
+    // postEdit() {
+    //   //this.address=this.addresslist;
+    //   axios.post('http://82.156.143.194:8090/user/addAddress', {
+    //     "value": this.form.address
+    //   },{
+    //     headers: {
+    //       token: localStorage.getItem("token"),
+    //     },
+    //   }).then(res => {
+    //     if (res.status === 200) {
+    //       this.notifySucceed('添加成功')
+    //       this.address.unshift(this.form);
+    //       this.addVisible=false
+    //     } else if (res.status === 401) {
+    //       this.loginExpired(res.message)
+    //     } else {
+    //       this.notifyError('添加失败', res.message)
+    //     }
+    //   })
+    //     .catch(err => {
+    //       this.notifyError('添加失败', err)
+    //     })
       /*
       this.form.user_id = this.$store.getters.getUser.id
       addressesAPI
@@ -473,7 +491,10 @@ export default {
         })
 
        */
-    }
+
+  },
+  computed:{
+    ...mapGetters(['getOrderId','getAddress','getProperty', 'getAvailableIndex']),
   }
 }
 </script>

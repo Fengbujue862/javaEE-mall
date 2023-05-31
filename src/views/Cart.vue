@@ -14,7 +14,7 @@
       <div class="cart-header">
         <div class="logo">
           <router-link to="/">
-            <img src="../assets/imgs/clogo.png" alt />
+            <img src="../assets/imgs/img.png" alt />
           </router-link>
         </div>
         <div class="cart-header-content">
@@ -25,7 +25,7 @@
           <div class="cart-header-select">
             <el-dropdown>
               <router-link to class="href">
-                <span style="margin-right:5px">{{this.$store.getters.getUser.nickname}}</span>
+                <span style="margin-right:5px">{{this.$store.getters.getUsername}}</span>
                 <i class="el-icon-caret-bottom"></i>
               </router-link>
               <el-dropdown-menu slot="dropdown">

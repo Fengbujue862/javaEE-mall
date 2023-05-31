@@ -54,7 +54,7 @@ const getSumPaid = () =>
     params: {
       limit: 10000,
       page: 1,
-      state: "PAID"
+      states: "PAID"
     },
     headers: {
       token: localStorage.getItem("token"),
@@ -67,7 +67,7 @@ const getSumUnpaid = () =>
     params: {
       limit: 10000,
       page: 1,
-      state: "UNPAID"
+      states: "UNPAID"
     },
     headers: {
       token: localStorage.getItem("token"),
