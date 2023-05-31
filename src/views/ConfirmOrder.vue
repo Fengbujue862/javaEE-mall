@@ -59,7 +59,7 @@
         <p class="title">收货地址</p>
         <div class="address-body">
           <ul>
-            <router-link to>
+            <div>
               <li
                 :class="item.id == confirmAddress ? 'in-section' : ''"
                 v-for="item in getAddress"
@@ -70,7 +70,7 @@
                 <p class="phone">{{item.info.toString().slice(item.info.toString().indexOf("@") + 1, item.info.toString().lastIndexOf("@"))}}</p>
                 <p class="address">{{item.info.toString().slice(item.info.toString().lastIndexOf("@") + 1)}}</p>
               </li>
-            </router-link>
+            </div>
             <li class="add-address" @click="addVisible=true">
               <i class="el-icon-circle-plus-outline"></i>
               <p>添加新地址</p>
@@ -231,9 +231,9 @@ export default {
       orderid:'', // 结算列表
     }
   },
-
-  mounted() {
+  activated() {
     //this.getAddress();
+    this.orderid=this.$route.query.id;
     this.getOrder();
   },
   filters: {
@@ -244,7 +244,6 @@ export default {
     }
   },
   methods: {
-
     ...mapActions(['setProperty', 'addAddress']),
     selectAddress(item) {
       this.confirmAddress = item.id;
@@ -275,7 +274,7 @@ export default {
     },
     getOrder() {
       //this.cart=this.cartlist;
-      this.orderid=this.$store.getters.getOrderId
+      this.orderid=this.$route.query.id;
       userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
         if (res.code == 200) {
           //this.setUser(res.data[0])

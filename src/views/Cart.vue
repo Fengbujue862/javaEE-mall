@@ -293,7 +293,8 @@ export default {
         this.notifySucceed('订单生成');
         console.log(res.data.data.id+"cc")
         this.setOrderId(res.data.data.id)
-        this.$router.push('/confirmOrder')
+        this.$router.push({path:'/confirmOrder',query:{id:res.data.data.id}})
+
       })
     },
     //...mapActions(['updateShoppingCart', 'deleteShoppingCart', 'checkAll']),

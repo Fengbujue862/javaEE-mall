@@ -248,7 +248,7 @@ export default {
     ...mapActions(['setOrderId']),
     getClick(id) {
       this.setOrderId(id)
-      this.$router.push('/confirmOrder')
+      this.$router.push({path:'/confirmOrder',query:{id:id}})
     },
     handleCurrentChange(val) {
       this.start = val; // val 页面
