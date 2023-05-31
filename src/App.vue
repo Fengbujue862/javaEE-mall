@@ -31,9 +31,6 @@
                     <i class="el-icon-caret-bottom"></i>
                   </span>
                   <el-dropdown-menu slot="dropdown">
-                    <a href="https://github.com/congz666/cmall-go" target="_blank">
-                      <el-dropdown-item>项目仓库</el-dropdown-item>
-                    </a>
                     <router-link to="/center">
                       <el-dropdown-item>个人中心</el-dropdown-item>
                     </router-link>
@@ -55,7 +52,7 @@
               <div style="margin-top:5px">
                 <router-link to="/cart">
                   <i class="el-icon-shopping-cart-full"></i> 购物车
-                  <span>({{getNum}})</span>
+<!--                  <span>({{getNum}})</span>-->
                 </router-link>
               </div>
             </li>
@@ -77,7 +74,7 @@
         >
           <div class="logo">
             <router-link to="/">
-              <img src="./assets/imgs/clogo.png" alt />
+              <img src="./assets/imgs/img.png" alt />
             </router-link>
           </div>
           <el-menu-item index="/">首页</el-menu-item>
