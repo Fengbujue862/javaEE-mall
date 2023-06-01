@@ -309,18 +309,6 @@ export default {
     getOrder() {
       //this.cart=this.cartlist;
       this.orderid=this.$route.query.id;
-      // userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
-      //   if (res.code == 200) {
-      //     //this.setUser(res.data[0])
-      //     this.user_account.account=res.data[0].property;
-      //     this.setProperty(res.data[0].property)
-      //     //console.log(res.data[0].property+"AAA")
-      //   } else {
-      //     this.notifyError(res.message)
-      //     localStorage.removeItem('user_id')
-      //     localStorage.removeItem('token')
-      //   }
-      // })
       axios.get('http://82.156.143.194:8090/shopping/findOrderById', {
         params: {
           orderId: this.$route.params.orderId
@@ -364,7 +352,6 @@ export default {
         return
       }
       else {
-        if (parseInt(this.cart.price) <= parseInt(this.getProperty)) {////money够就跳转
           axios.post('http://82.156.143.194:8090/shopping/pay', {
             "address": this.chosenAddress,
             "orderId": this.$route.params.orderId
@@ -373,13 +360,11 @@ export default {
               token: localStorage.getItem("token"),
             },
           }).then(res => {
-            if (res.status === 200) {
+            if (res.data.code== 200) {
               this.notifySucceed('付款成功')
-              this.setProperty((parseInt(this.getProperty) - parseInt(this.cart.price).toString()))
-              //console.log(this.getProperty)
               this.$router.push({ path: '/' })
-            } else if (res.status === 401) {
-              this.loginExpired(res.message)
+            } else if (res.data.code == 10000) {
+              this.addVisible1 = true;
             } else {
               this.notifyError('付款失败', res.message)
             }
@@ -437,9 +422,7 @@ export default {
             })
         }
       */
-        } else {
-          this.addVisible1 = true;
-        }
+
       }
     },
     reCharge(){
@@ -453,8 +436,6 @@ export default {
       }).then(res => {
         if (res.status === 200) {
           this.notifySucceed('充值成功')
-          this.setProperty((parseInt(this.getProperty) + parseInt(this.input)).toString())
-          //console.log(this.getProperty)
         } else if (res.status === 401) {
           this.loginExpired(res.message)
         } else {
