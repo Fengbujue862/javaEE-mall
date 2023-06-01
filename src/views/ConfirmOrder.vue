@@ -59,7 +59,7 @@
         <p class="title">收货地址</p>
         <div class="address-body">
           <ul>
-            <router-link to>
+            <div>
               <li
                 :class="item.id == confirmAddress ? 'in-section' : ''"
                 v-for="item in getAddress"
@@ -70,7 +70,7 @@
                 <p class="phone">{{item.info.toString().slice(item.info.toString().indexOf("@") + 1, item.info.toString().lastIndexOf("@"))}}</p>
                 <p class="address">{{item.info.toString().slice(item.info.toString().lastIndexOf("@") + 1)}}</p>
               </li>
-            </router-link>
+            </div>
             <li class="add-address" @click="addVisible=true">
               <i class="el-icon-circle-plus-outline"></i>
               <p>添加新地址</p>
@@ -150,7 +150,7 @@
       </span>
     </el-dialog>
     <el-dialog title="账户充值" :visible.sync="addVisible1" width="30%">
-      <el-form ref="form" :model="user_account" label-width="70px">
+      <el-form ref="form" label-width="70px">
         <el-form-item label="账号">
           <span style="margin-right:5px">{{this.$store.getters.getUsername}}</span>
         </el-form-item>
@@ -265,9 +265,9 @@ export default {
       orderid:'', // 结算列表
     }
   },
-
-  mounted() {
+  activated() {
     //this.getAddress();
+    this.orderid=this.$route.query.id;
     this.getOrder();
   },
   filters: {
@@ -278,7 +278,6 @@ export default {
     }
   },
   methods: {
-
     ...mapActions(['setProperty', 'addAddress']),
     selectAddress(item) {
       this.confirmAddress = item.id;
@@ -309,8 +308,7 @@ export default {
     },
     getOrder() {
       //this.cart=this.cartlist;
-      this.orderid=this.$route.params.orderId
-      //console.log(this.$route.params.orderId)
+      this.orderid=this.$route.query.id;
       // userAPI.showInfo({user_id: Number.parseInt(localStorage.getItem('user_id'))} ).then(res => {
       //   if (res.code == 200) {
       //     //this.setUser(res.data[0])
@@ -369,7 +367,7 @@ export default {
         if (parseInt(this.cart.price) <= parseInt(this.getProperty)) {////money够就跳转
           axios.post('http://82.156.143.194:8090/shopping/pay', {
             "address": this.chosenAddress,
-            "orderId": this.orderid
+            "orderId": this.$route.params.orderId
           },{
             headers: {
               token: localStorage.getItem("token"),
@@ -378,6 +376,7 @@ export default {
             if (res.status === 200) {
               this.notifySucceed('付款成功')
               this.setProperty((parseInt(this.getProperty) - parseInt(this.cart.price).toString()))
+              //console.log(this.getProperty)
               this.$router.push({ path: '/' })
             } else if (res.status === 401) {
               this.loginExpired(res.message)
@@ -444,7 +443,7 @@ export default {
       }
     },
     reCharge(){
-      this.user_account.id=this.cart.user_id;
+      //this.user_account.id=this.cart.user_id;
       axios.post('http://82.156.143.194:8090/shopping/recharge', {
         "value": this.input
       },{
@@ -454,7 +453,8 @@ export default {
       }).then(res => {
         if (res.status === 200) {
           this.notifySucceed('充值成功')
-          this.setProperty(this.input)
+          this.setProperty((parseInt(this.getProperty) + parseInt(this.input)).toString())
+          //console.log(this.getProperty)
         } else if (res.status === 401) {
           this.loginExpired(res.message)
         } else {
@@ -465,8 +465,8 @@ export default {
           this.notifyError('充值失败', err)
         })
       this.addVisible1 = false;
-      this.user_account.account=parseInt(this.user_account.account)+parseInt(this.input);
-      console.log(this.user_account.account+"CCC")
+      //this.user_account.account=parseInt(this.user_account.account)+parseInt(this.input);
+      //console.log(this.user_account.account+"CCC")
     },
     postEdit() {
       let payload = this.form.name + "@" + this.form.phone + "@" + this.form.address

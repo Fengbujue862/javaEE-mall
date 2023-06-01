@@ -171,7 +171,7 @@ export default {
         this.productPictures=this.productdata.picture
         this.productdata.price=parseFloat(this.productdata.price).toFixed(2)
         this.productdata.originalPrice=parseFloat(this.productdata.originalPrice).toFixed(2)
-        console.log(this.productPictures)
+        //console.log(this.productPictures)
       })
     },
     goInfo() {
@@ -203,7 +203,7 @@ export default {
         },
       }).then(res => {
         this.notifySucceed('添加购物车成功')
-        console.log(this.num)
+        //console.log(this.num)
       })
       // var form = {
       //   user_id: this.$store.getters.getUser.id,

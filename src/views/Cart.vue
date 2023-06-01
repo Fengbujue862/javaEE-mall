@@ -213,8 +213,8 @@ export default {
         },
       }).then(res => {
         this.notifySucceed('修改购物车成功')
-        console.log(this.choose)
-        console.log(this.maxprice)
+        //console.log(this.choose)
+        //console.log(this.maxprice)
       })
     },
     deleteItem(id){
@@ -291,7 +291,7 @@ export default {
         },
       }).then(res => {
         this.notifySucceed('订单生成');
-        console.log(res.data.data.id+"cc")
+        //ole.log(res.data.data.id+"cc")
         //this.setOrderId(res.data.data.id)
         this.$router.push({name: 'ConfirmOrder' ,params:{orderId: res.data.data.id} })
       })

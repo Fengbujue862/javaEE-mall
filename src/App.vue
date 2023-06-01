@@ -159,7 +159,7 @@ export default {
           //this.setUser(res.data[0])
 
         } else {
-          this.notifyError(res.message)
+          //this.notifyError(res.message)
           localStorage.removeItem('user_id')
           localStorage.removeItem('token')
         }

@@ -204,7 +204,7 @@ export default {
         }
       }).then(res => {
         this.carousels=res.data.data.list
-        console.log(this.carousels)
+        //console.log(this.carousels)
       })
       /*carouselsAPI
         .listCarousels()

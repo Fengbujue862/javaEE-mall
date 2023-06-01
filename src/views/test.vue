@@ -21,7 +21,7 @@ export default {
   },
   activated() {
     this.load()
-    console.log(11)
+    //console.log(11)
   },
   methods: {
     load() {
@@ -30,8 +30,8 @@ export default {
           token: localStorage.getItem("token"),
         },
       }).then(res => {
-        console.log(res.data)
-        console.log(localStorage.getItem("token"))
+        //console.log(res.data)
+        //console.log(localStorage.getItem("token"))
         this.temp=res.data
       })
     },

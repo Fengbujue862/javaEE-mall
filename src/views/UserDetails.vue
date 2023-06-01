@@ -94,7 +94,7 @@ export default {
       return isPNG && isLt2M
     },
     fnUploadRequest(option) {
-      console.log(option.file)
+      //console.log(option.file)
       const fd = new FormData()
       fd.append('file', option.file)
       uplpadAPI

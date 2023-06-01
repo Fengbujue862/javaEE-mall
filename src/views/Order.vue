@@ -247,8 +247,10 @@ export default {
   methods: {
     ...mapActions(['setOrderId']),
     getClick(id) {
+      //console.log(id)
       this.setOrderId(id)
-      this.$router.push({path:'/confirmOrder',query:{id:id}})
+      //this.$router.push({name: 'ConfirmOrder' ,params:{orderId: res.data.data.id} })
+      this.$router.push({name: 'ConfirmOrder',params:{orderId:id}})
     },
     handleCurrentChange(val) {
       this.start = val; // val 页面
@@ -332,7 +334,7 @@ export default {
         }
       }
       else if(this.type==0){
-        console.log("cccc")
+        //console.log("cccc")
         axios.get('http://82.156.143.194:8090/shopping/listOrders', {
           params: {
             page:this.start,
@@ -344,7 +346,7 @@ export default {
         }).then(res => {
           if (res.status === 200) {
             this.orders = res.data.data.list
-            console.log(this.orders)
+            //console.log(this.orders)
             this.total = res.data.data.total
           } else if (res.status === 401) {
             this.loginExpired(res.message)
